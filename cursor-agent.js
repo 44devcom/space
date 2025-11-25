@@ -6,6 +6,7 @@
  * Final merged version:
  * - Original minimal runtime
  * - Workspace Engine v1 integration
+ * - Agent Event Bus v1
  * - Load .cursor/ecosystem.json
  * - Load .cursor/agents/*.json
  * - Load / update .cursor/state.json
@@ -21,6 +22,8 @@ const { spawnSync } = require("child_process");
 
 // Workspace Engine v1
 const workspaceEngine = require("./.cursor/workspace-engine.js");
+// Event Bus v1
+const eventBus = require("./.cursor/event-bus.js");
 
 // Paths
 const ECOSYSTEM_PATH = path.resolve(".cursor", "ecosystem.json");
@@ -123,6 +126,57 @@ function buildEnvForAgent(runtimeContext) {
 }
 
 // -----------------------------------------
+// Listener Agents via Event Bus
+// -----------------------------------------
+
+function runListenerAgentsForEvent(eventName, payload) {
+  let ecosystem;
+  try {
+    ecosystem = loadEcosystem();
+  } catch (err) {
+    return;
+  }
+
+  const agents = ecosystem.agents || [];
+
+  for (const name of agents) {
+    let agent;
+    try {
+      agent = loadAgent(name);
+    } catch {
+      continue;
+    }
+
+    if (!Array.isArray(agent.listens)) continue;
+    if (!agent.listens.includes(eventName)) continue;
+    if (!agent.runs) continue;
+
+    const scriptPath = path.resolve(agent.runs);
+    if (!fileExists(scriptPath)) continue;
+
+    try {
+      const runtimeContext = workspaceEngine.buildRuntimeContext();
+      const env = {
+        ...buildEnvForAgent(runtimeContext),
+        SPACE_EVENT_NAME: eventName,
+        SPACE_EVENT_PAYLOAD: JSON.stringify(payload || {})
+      };
+
+      // Execute listener scripts silently in background
+      spawnSync(scriptPath, {
+        stdio: "ignore",
+        shell: true,
+        env
+      });
+    } catch (err) {
+      error(`Listener agent "${agent.name}" failed on event ${eventName}:`, err.message);
+    }
+  }
+}
+
+eventBus.setAgentListenerRunner(runListenerAgentsForEvent);
+
+// -----------------------------------------
 // Run an agent
 // -----------------------------------------
 
@@ -137,33 +191,54 @@ function runAgent(agentName, options = {}, visited = new Set()) {
   visited.add(agentName);
 
   const agent = loadAgent(agentName);
+
+  eventBus.emit("onAgentStart", { agent: agent.name });
   log(`Running agent: ${agent.name} v${agent.version}`);
 
   // Dependencies
   if (withDeps && Array.isArray(agent.dependencies)) {
     for (const dep of agent.dependencies) {
       log(`→ Running dependency: ${dep}`);
+      eventBus.emit("onAgentDependencyStart", { agent: agent.name, dependency: dep });
       runAgent(dep, { withDeps }, visited);
+      eventBus.emit("onAgentDependencyEnd", { agent: agent.name, dependency: dep });
     }
   }
 
   // Execute the agent's script
   if (agent.runs) {
     const scriptPath = path.resolve(agent.runs);
+
     if (!fileExists(scriptPath)) {
       error(`Agent "${agent.name}" has runs="${agent.runs}", but file not found: ${scriptPath}`);
     } else {
+      eventBus.emit("onScriptStart", { agent: agent.name, script: scriptPath });
       log(`→ Executing script: ${scriptPath}`);
+
       const result = spawnSync(scriptPath, {
         stdio: "inherit",
         shell: true,
         env: buildEnvForAgent(runtimeContext)
       });
 
+      eventBus.emit("onScriptEnd", {
+        agent: agent.name,
+        script: scriptPath,
+        status: result.status
+      });
+
       if (result.error) {
+        eventBus.emit("onError", {
+          agent: agent.name,
+          message: result.error.message
+        });
         error(`Failed to execute script for agent "${agent.name}":`, result.error.message);
       }
       if (result.status !== 0) {
+        eventBus.emit("onError", {
+          agent: agent.name,
+          status: result.status
+        });
         error(`Script for agent "${agent.name}" exited with code ${result.status}`);
       }
     }
@@ -171,7 +246,7 @@ function runAgent(agentName, options = {}, visited = new Set()) {
     log(`No external 'runs' script for agent "${agent.name}".`);
   }
 
-  // Update state if defined
+  // Update state
   if (agent.output && agent.output.updatesState && Array.isArray(agent.output.stateKeys)) {
     const state = loadState();
 
@@ -200,8 +275,13 @@ function runAgent(agentName, options = {}, visited = new Set()) {
 
     saveState(state);
     log(`State updated for agent: ${agent.name}`);
+    eventBus.emit("onStateUpdate", {
+      agent: agent.name,
+      stateKeys: agent.output.stateKeys
+    });
   }
 
+  eventBus.emit("onAgentEnd", { agent: agent.name });
   log(`Agent "${agent.name}" finished.`);
 }
 
@@ -233,6 +313,7 @@ Examples:
 function listAgents() {
   const ecosystem = loadEcosystem();
   const agents = ecosystem.agents || [];
+
   console.log("Registered agents:");
   for (const name of agents) {
     try {
@@ -246,10 +327,14 @@ function listAgents() {
 
 function workspaceInfo() {
   const ctx = workspaceEngine.buildRuntimeContext();
+  eventBus.emit("onWorkspaceContextReady", { workspace: ctx.workspace });
   console.log(JSON.stringify(ctx, null, 2));
 }
 
+// -----------------------------------------
 // Entry point
+// -----------------------------------------
+
 (function main() {
   const args = process.argv.slice(2);
   const cmd = args[0];
@@ -274,9 +359,11 @@ function workspaceInfo() {
     }
 
     const withDeps = args.includes("--with-deps");
+
     try {
       runAgent(agentName, { withDeps });
     } catch (err) {
+      eventBus.emit("onError", { agent: agentName, message: err.message });
       error(err.message);
       process.exit(1);
     }
