@@ -1,0 +1,21 @@
+{
+    "name": "space-extension",
+    "displayName": "SPACE Agent Tools",
+    "description": "Integration for the SPACE ecosystem: agents, workspace runtime, and CLI tools.",
+    "version": "1.0.0",
+    "engines": { "vscode": "^1.80.0" },
+    "activationEvents": ["onStartupFinished"],
+    "main": "./extension.js",
+    "contributes": {
+      "commands": [
+        { "command": "space.init", "title": "SPACE: Initialize Project" },
+        { "command": "space.createTask", "title": "SPACE: Create Task" },
+        { "command": "space.completeTask", "title": "SPACE: Complete Task" },
+        { "command": "space.runAgent", "title": "SPACE: Run Agent" }
+      ]
+    },
+    "scripts": {
+      "package": "vsce package"
+    }
+  }
+  

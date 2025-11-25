@@ -3,31 +3,33 @@
 /**
  * SPACE Cursor Agent Runtime
  *
- * Minimal runtime to:
- * - load .cursor/ecosystem.json
- * - load agent definitions from .cursor/agents/
- * - load and update .cursor/state.json
- * - run agents (with optional dependency execution)
- * - execute external scripts defined in agent.runs (e.g. run-init-agent.sh)
- *
- * Usage:
- *   node cursor-agent.js list
- *   node cursor-agent.js run <agent-name> [--with-deps]
- *
- * Examples:
- *   node cursor-agent.js list
- *   node cursor-agent.js run init-agent --with-deps
+ * Final merged version:
+ * - Original minimal runtime
+ * - Workspace Engine v1 integration
+ * - Load .cursor/ecosystem.json
+ * - Load .cursor/agents/*.json
+ * - Load / update .cursor/state.json
+ * - Dependency resolution
+ * - Execute agent scripts (agent.runs)
+ * - Inject workspace context into execution environment
+ * - Provide /workspace-info
  */
 
-const fs = require('fs');
-const path = require('path');
-const { spawnSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { spawnSync } = require("child_process");
 
-const ECOSYSTEM_PATH = path.resolve('.cursor', 'ecosystem.json');
-const AGENTS_DIR = path.resolve('.cursor', 'agents');
-const STATE_PATH = path.resolve('.cursor', 'state.json');
+// Workspace Engine v1
+const workspaceEngine = require("./.cursor/workspace-engine.js");
 
-// ---------- Helpers ----------
+// Paths
+const ECOSYSTEM_PATH = path.resolve(".cursor", "ecosystem.json");
+const AGENTS_DIR = path.resolve(".cursor", "agents");
+const STATE_PATH = path.resolve(".cursor", "state.json");
+
+// -----------------------------------------
+// Helpers
+// -----------------------------------------
 
 function fileExists(p) {
   try {
@@ -43,31 +45,30 @@ function loadJson(p, fallback = null) {
     if (fallback !== null) return fallback;
     throw new Error(`Missing JSON file: ${p}`);
   }
-  const raw = fs.readFileSync(p, 'utf8');
+  const raw = fs.readFileSync(p, "utf8");
   try {
     return JSON.parse(raw);
   } catch (err) {
-    throw new Error(`Failed to parse JSON: ${p}\n${err.message}`);
+    throw new Error(`Failed to parse JSON file: ${p}\n${err.message}`);
   }
 }
 
 function saveJson(p, data) {
-  const dir = path.dirname(p);
-  if (!fileExists(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\n', 'utf8');
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, JSON.stringify(data, null, 2) + "\n", "utf8");
 }
 
 function log(...args) {
-  console.log('[cursor-agent]', ...args);
+  console.log("[cursor-agent]", ...args);
 }
 
 function error(...args) {
-  console.error('[cursor-agent][ERROR]', ...args);
+  console.error("[cursor-agent][ERROR]", ...args);
 }
 
-// ---------- Ecosystem / Agent / State loading ----------
+// -----------------------------------------
+// Loaders
+// -----------------------------------------
 
 function loadEcosystem() {
   return loadJson(ECOSYSTEM_PATH);
@@ -96,27 +97,49 @@ function saveState(state) {
   saveJson(STATE_PATH, state);
 }
 
-// ---------- Core: run an agent ----------
+// -----------------------------------------
+// Workspace Runtime: Inject Context into Scripts
+// -----------------------------------------
 
-/**
- * Run an agent by name.
- *
- * Options:
- *   - withDeps: if true, run dependencies first (depth-first)
- */
+function buildEnvForAgent(runtimeContext) {
+  return {
+    ...process.env,
+
+    // Workspace metadata
+    SPACE_WORKSPACE_NAME: runtimeContext.workspace.name,
+    SPACE_WORKSPACE_BRANCH: runtimeContext.workspace.branch,
+
+    // State metadata
+    SPACE_LAST_COMMIT: runtimeContext.state.lastCommit || "",
+    SPACE_LAST_RELEASE: runtimeContext.state.lastRelease || "",
+    SPACE_ACTIVE_TASK: runtimeContext.state.activeTask || "",
+
+    // Tools
+    SPACE_TOOLS: Object.keys(runtimeContext.tools).join(","),
+
+    // Merged env
+    ...runtimeContext.env
+  };
+}
+
+// -----------------------------------------
+// Run an agent
+// -----------------------------------------
+
 function runAgent(agentName, options = {}, visited = new Set()) {
   const { withDeps = false } = options;
 
-  if (visited.has(agentName)) {
-    // prevent cycles
-    return;
-  }
+  // Build runtime context for agents
+  const runtimeContext = workspaceEngine.buildRuntimeContext();
+  workspaceEngine.applyWorkspaceEnv(runtimeContext);
+
+  if (visited.has(agentName)) return;
   visited.add(agentName);
 
   const agent = loadAgent(agentName);
   log(`Running agent: ${agent.name} v${agent.version}`);
 
-  // 1. Run dependencies (if requested)
+  // Dependencies
   if (withDeps && Array.isArray(agent.dependencies)) {
     for (const dep of agent.dependencies) {
       log(`→ Running dependency: ${dep}`);
@@ -124,7 +147,7 @@ function runAgent(agentName, options = {}, visited = new Set()) {
     }
   }
 
-  // 2. Execute the agent's external "runs" script, if present.
+  // Execute the agent's script
   if (agent.runs) {
     const scriptPath = path.resolve(agent.runs);
     if (!fileExists(scriptPath)) {
@@ -132,8 +155,9 @@ function runAgent(agentName, options = {}, visited = new Set()) {
     } else {
       log(`→ Executing script: ${scriptPath}`);
       const result = spawnSync(scriptPath, {
-        stdio: 'inherit',
-        shell: true
+        stdio: "inherit",
+        shell: true,
+        env: buildEnvForAgent(runtimeContext)
       });
 
       if (result.error) {
@@ -144,15 +168,15 @@ function runAgent(agentName, options = {}, visited = new Set()) {
       }
     }
   } else {
-    log(`No external 'runs' script defined for agent "${agent.name}". Nothing to execute.`);
+    log(`No external 'runs' script for agent "${agent.name}".`);
   }
 
-  // 3. Update .cursor/state.json if agent declares output stateKeys
+  // Update state if defined
   if (agent.output && agent.output.updatesState && Array.isArray(agent.output.stateKeys)) {
     const state = loadState();
+
     for (const key of agent.output.stateKeys) {
-      // Support simple dotted paths like "flags.initialized"
-      const parts = key.split('.');
+      const parts = key.split(".");
       let cur = state;
 
       for (let i = 0; i < parts.length; i++) {
@@ -160,32 +184,30 @@ function runAgent(agentName, options = {}, visited = new Set()) {
         const isLast = i === parts.length - 1;
 
         if (isLast) {
-          // Heuristic: set booleans to true, others to a timestamp
-          if (part.startsWith('is') || part === 'initialized' || part === 'docsInSync') {
+          if (part.includes("initialized") || part.includes("docsInSync")) {
             cur[part] = true;
-          } else if (part === 'lastWorkspace') {
-            cur[part] = state.lastWorkspace || (state.lastWorkspace === null ? null : state.lastWorkspace);
-          } else if (part === 'lastCommit' || part === 'lastRelease') {
-            cur[part] = new Date().toISOString();
           } else {
-            cur[part] = true;
+            cur[part] = new Date().toISOString();
           }
         } else {
-          if (typeof cur[part] !== 'object' || cur[part] === null) {
+          if (typeof cur[part] !== "object" || cur[part] === null) {
             cur[part] = {};
           }
           cur = cur[part];
         }
       }
     }
+
     saveState(state);
-    log('State updated for agent:', agent.name);
+    log(`State updated for agent: ${agent.name}`);
   }
 
   log(`Agent "${agent.name}" finished.`);
 }
 
-// ---------- CLI ----------
+// -----------------------------------------
+// CLI
+// -----------------------------------------
 
 function printHelp() {
   console.log(`
@@ -194,24 +216,24 @@ SPACE Cursor Agent Runtime
 Usage:
   node cursor-agent.js list
   node cursor-agent.js run <agent-name> [--with-deps]
+  node cursor-agent.js workspace-info
 
 Commands:
-  list                 List all agents from .cursor/ecosystem.json
-  run <agent-name>     Run a specific agent by name
-
-Options:
-  --with-deps          Run the agent's dependencies first (depth-first)
+  list                 List all agents
+  run <agent-name>     Run an agent
+  workspace-info       Print resolved workspace context
 
 Examples:
   node cursor-agent.js list
   node cursor-agent.js run init-agent --with-deps
+  node cursor-agent.js workspace-info
 `);
 }
 
 function listAgents() {
   const ecosystem = loadEcosystem();
   const agents = ecosystem.agents || [];
-  console.log('Registered agents:');
+  console.log("Registered agents:");
   for (const name of agents) {
     try {
       const agent = loadAgent(name);
@@ -222,29 +244,36 @@ function listAgents() {
   }
 }
 
+function workspaceInfo() {
+  const ctx = workspaceEngine.buildRuntimeContext();
+  console.log(JSON.stringify(ctx, null, 2));
+}
+
 // Entry point
 (function main() {
   const args = process.argv.slice(2);
   const cmd = args[0];
 
-  if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') {
-    printHelp();
-    return;
+  if (!cmd || cmd === "help" || cmd === "--help" || cmd === "-h") {
+    return printHelp();
   }
 
-  if (cmd === 'list') {
-    listAgents();
-    return;
+  if (cmd === "list") {
+    return listAgents();
   }
 
-  if (cmd === 'run') {
+  if (cmd === "workspace-info") {
+    return workspaceInfo();
+  }
+
+  if (cmd === "run") {
     const agentName = args[1];
     if (!agentName) {
-      error('Missing agent name. Usage: node cursor-agent.js run <agent-name>');
+      error("Missing agent name. Usage: node cursor-agent.js run <agent-name>");
       process.exit(1);
     }
 
-    const withDeps = args.includes('--with-deps');
+    const withDeps = args.includes("--with-deps");
     try {
       runAgent(agentName, { withDeps });
     } catch (err) {
