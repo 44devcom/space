@@ -1,0 +1,37 @@
+{
+    "name": "release-agent",
+    "version": "1.0.1",
+    "description": "Handles semantic versioning, changelog updates, tagging, and GitHub releases for the SPACE project.",
+    "manages": {
+      "files": [
+        "CHANGELOG.md"
+      ]
+    },
+    "capabilities": {
+      "prepareRelease": true,
+      "updateChangelogVersion": true,
+      "createGitTag": true,
+      "pushRelease": true
+    },
+    "dependencies": [
+      "docs-agent"
+    ],
+    "toolsUsed": [
+      "git-commit",
+      "git-push"
+    ],
+    "workflow": [
+      "collect unreleased changelog entries",
+      "increment semantic version",
+      "generate release commit",
+      "create git tag",
+      "push release changes"
+    ],
+    "output": {
+      "updatesState": true,
+      "stateKeys": [
+        "lastRelease"
+      ]
+    }
+  }
+  

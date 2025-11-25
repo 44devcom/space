@@ -1,0 +1,45 @@
+{
+    "tools": {
+      "git-init": {
+        "description": "Initializes a repository with master as default branch.",
+        "args": ["repository?"]
+      },
+      "git-commit": {
+        "description": "Commits with manual or auto-generated message.",
+        "args": ["message?"]
+      },
+      "git-push": {
+        "description": "Pushes changes and sets upstream automatically."
+      },
+      "git-pull": {
+        "description": "Rebases from remote before writing any code."
+      },
+      "git-branch": {
+        "description": "Creates a branch following naming conventions.",
+        "args": ["branch-name?"]
+      },
+      "task-create": {
+        "description": "Creates a task file and branch.",
+        "args": ["title?"]
+      },
+      "task-complete": {
+        "description": "Completes task, updates docs, commits."
+      },
+      "ws-create": {
+        "description": "Creates .cursor/workspace.json.",
+        "args": ["name?"]
+      },
+      "ws-switch": {
+        "description": "Switches active workspace.",
+        "args": ["workspace"]
+      },
+      "ai-test": {
+        "description": "Generates tests based on code diff."
+      },
+      "init-agent": {
+        "description": "Runs init-agent script.",
+        "runs": "run-init-agent.sh"
+      }
+    }
+  }
+  

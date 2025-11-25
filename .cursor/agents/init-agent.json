@@ -1,0 +1,63 @@
+{
+  "name": "init-agent",
+  "version": "1.0.2",
+  "description": "Initializes the SPACE portable workspace ecosystem, sets up directory structure, prepares documentation, installs workflows, initializes Git, and creates the first workspace.",
+  "manages": {
+    "directories": [
+      ".github/workflows",
+      "tasks",
+      ".cursor"
+    ],
+    "files": [
+      "README.md",
+      "CHANGELOG.md",
+      ".github/workflows/release.yml",
+      ".github/workflows/update-changelog.yml",
+      ".cursor/workspace.json"
+    ],
+    "git": {
+      "init": true,
+      "defaultBranch": "master",
+      "initialCommit": "feat: initialize SPACE ecosystem"
+    },
+    "workspace": {
+      "enabled": true,
+      "file": ".cursor/workspace.json"
+    }
+  },
+  "dependencies": [
+    "workspace-agent",
+    "docs-agent",
+    "release-agent"
+  ],
+  "toolsUsed": [
+    "git-init",
+    "git-commit",
+    "git-push",
+    "git-pull",
+    "git-branch",
+    "task-create",
+    "task-complete",
+    "ws-create",
+    "ws-switch"
+  ],
+  "workflow": [
+    "create required directories",
+    "verify or generate documentation",
+    "install workflows",
+    "initialize git repository",
+    "create workspace definition",
+    "register initial task",
+    "commit initialization"
+  ],
+  "runs": "run-init-agent.sh",
+  "output": {
+    "summary": "SPACE ecosystem initialized successfully.",
+    "updatesState": true,
+    "stateKeys": [
+      "flags.initialized",
+      "lastWorkspace",
+      "lastCommit"
+    ]
+  }
+}

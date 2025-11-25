@@ -1,0 +1,26 @@
+{
+    "name": "test-agent",
+    "version": "1.0.1",
+    "description": "Executes unit tests, integration tests, and AI-generated tests to validate code correctness and system behavior.",
+    "manages": {},
+    "capabilities": {
+      "runTests": true,
+      "generateTestsFromDiff": true
+    },
+    "dependencies": [
+      "build-agent"
+    ],
+    "toolsUsed": [
+      "ai-test"
+    ],
+    "workflow": [
+      "build project before testing",
+      "run automated tests",
+      "generate tests from diffs when applicable",
+      "report test results"
+    ],
+    "output": {
+      "updatesState": false
+    }
+  }
+  

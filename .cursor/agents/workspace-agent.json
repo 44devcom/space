@@ -1,0 +1,36 @@
+{
+    "name": "workspace-agent",
+    "version": "1.0.1",
+    "description": "Manages the SPACE portable workspace definition and active environment configuration.",
+    "manages": {
+      "files": [
+        ".cursor/workspace.json"
+      ],
+      "directories": [
+        ".cursor"
+      ]
+    },
+    "capabilities": {
+      "createWorkspace": true,
+      "switchWorkspace": true,
+      "inspectWorkspace": true
+    },
+    "toolsUsed": [
+      "ws-create",
+      "ws-switch"
+    ],
+    "dependencies": [],
+    "workflow": [
+      "detect active workspace",
+      "create workspace if missing",
+      "switch active workspace",
+      "update workspace metadata"
+    ],
+    "output": {
+      "updatesState": true,
+      "stateKeys": [
+        "lastWorkspace"
+      ]
+    }
+  }
+  

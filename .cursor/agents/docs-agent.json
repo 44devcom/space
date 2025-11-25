@@ -1,0 +1,38 @@
+{
+    "name": "docs-agent",
+    "version": "1.0.1",
+    "description": "Maintains documentation consistency between README, CHANGELOG, and task files. Keeps all project docs aligned with the SPACE development model.",
+    "manages": {
+      "files": [
+        "README.md",
+        "CHANGELOG.md"
+      ],
+      "directories": [
+        "tasks/"
+      ]
+    },
+    "capabilities": {
+      "syncDocumentation": true,
+      "updateChangelog": true,
+      "generateTaskDocs": true
+    },
+    "dependencies": [],
+    "toolsUsed": [
+      "task-create",
+      "task-complete"
+    ],
+    "workflow": [
+      "validate README as source of truth",
+      "ensure CHANGELOG up-to-date",
+      "generate docs for new tasks",
+      "mark tasks as completed",
+      "sync documentation state"
+    ],
+    "output": {
+      "updatesState": true,
+      "stateKeys": [
+        "docsInSync"
+      ]
+    }
+  }
+  

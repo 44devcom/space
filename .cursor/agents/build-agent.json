@@ -1,0 +1,30 @@
+{
+    "name": "build-agent",
+    "version": "1.0.1",
+    "description": "Builds the SPACE project, validates compilation, and ensures artifacts are ready for testing or release.",
+    "manages": {
+      "directories": [
+        "build/",
+        "dist/"
+      ]
+    },
+    "capabilities": {
+      "runBuild": true,
+      "compileCode": true,
+      "prepareArtifacts": true
+    },
+    "dependencies": [
+      "workspace-agent"
+    ],
+    "toolsUsed": [],
+    "workflow": [
+      "load workspace",
+      "compile project code",
+      "generate build artifacts",
+      "report build status"
+    ],
+    "output": {
+      "updatesState": false
+    }
+  }
+  

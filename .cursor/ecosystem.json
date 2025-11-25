@@ -1,0 +1,17 @@
+{
+    "name": "SPACE Ecosystem",
+    "version": "1.0.1",
+    "description": "Multi-agent automation ecosystem for SPACE Portable Workspace Manager.",
+    "agents": [
+      "init-agent",
+      "workspace-agent",
+      "docs-agent",
+      "build-agent",
+      "test-agent",
+      "release-agent"
+    ],
+    "stateFile": ".cursor/state.json",
+    "workspaceFile": ".cursor/workspace.json",
+    "toolManifest": ".cursor/tools/manifest.json"
+  }
+  
