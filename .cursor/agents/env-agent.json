@@ -1,0 +1,37 @@
+{
+    "name": "env-agent",
+    "version": "1.0.1",
+    "description": "Manages development environments (Python venv, Node.js, etc.) for the SPACE workspace.",
+    "manages": {
+      "files": [
+        ".space/env.json"
+      ],
+      "directories": [
+        ".space",
+        ".venv"
+      ]
+    },
+    "capabilities": {
+      "createEnvironment": true,
+      "switchEnvironment": true,
+      "inspectEnvironment": true
+    },
+    "toolsUsed": [
+      "env-create",
+      "env-switch"
+    ],
+    "dependencies": [],
+    "workflow": [
+      "detect project type",
+      "create environment if missing",
+      "switch active environment",
+      "update environment metadata"
+    ],
+    "output": {
+      "updatesState": true,
+      "stateKeys": [
+        "lastEnvironment"
+      ]
+    }
+  }
+

@@ -5,6 +5,7 @@
     "agents": [
       "init-agent",
       "workspace-agent",
+      "env-agent",
       "docs-agent",
       "build-agent",
       "test-agent",

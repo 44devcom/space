@@ -24,6 +24,8 @@ Usage:
   space task complete
   space workspace create <name>
   space workspace switch <name>
+  space env create <name?> <type?>
+  space env switch <name>
   space build
   space test
   space release
@@ -61,6 +63,13 @@ Commands map to agents and tools in the ecosystem.
         return AGENT("workspace-agent");
       if (args[1] === "switch")
         return AGENT("workspace-agent");
+      return help();
+
+    case "env":
+      if (args[1] === "create")
+        return AGENT("env-agent");
+      if (args[1] === "switch")
+        return AGENT("env-agent");
       return help();
 
     case "build":
