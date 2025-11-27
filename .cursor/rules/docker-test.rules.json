@@ -1,0 +1,45 @@
+{
+    "version": 1,
+    "test_environment": {
+      "root": "tests/docker",
+      "compose_file": "docker-compose.test.yml",
+      "results": "results",
+      "scripts": "scripts"
+    },
+    "auto_discovery": {
+      "laravel": {
+        "routes_command": "php artisan route:list --json",
+        "models_path": "app/Models",
+        "model_extensions": [".php"]
+      },
+      "fastapi": {
+        "openapi_url": "http://fastapi:8000/openapi.json",
+        "models_path": "app/models",
+        "model_extensions": [".py"]
+      }
+    },
+    "testing": {
+      "health": true,
+      "connectivity": true,
+      "schema_validation": true,
+      "endpoint_checks": true,
+      "model_checks": true,
+      "database_checks": true,
+      "redis_checks": true,
+      "performance": false,
+      "security": true
+    },
+    "security": {
+      "scan_nginx_headers": true,
+      "scan_laravel": true,
+      "scan_fastapi": true
+    },
+    "schema_validation": {
+      "json": true,
+      "openapi": true
+    },
+    "pass_fail": {
+      "stop_on_error": false,
+      "log_patterns_fail": ["error", "fatal", "panic", "exception"]
+    }
+  }

@@ -1,0 +1,32 @@
+---
+alwaysApply: true
+---
+# Redis Docker Service (Production)
+
+## Image
+- `redis:7.2-alpine`
+
+## Production Settings
+- Append-only mode enabled
+- Maxmemory policy: `allkeys-lru`
+- Protected mode disabled for internal networking
+- Password authentication enabled
+
+## Volumes
+- `/data` — persistent storage
+
+## Environment (docker-compose)
+```bash
+REDIS_PASSWORD=yourStrongPassword
+```
+
+## Redis Commander (Optional)
+Web UI for debugging:
+```bash
+ghcr.io/joeferner/redis-commander:latest
+```
+
+## Healthcheck
+```bash
+redis-cli -a $REDIS_PASSWORD ping
+```

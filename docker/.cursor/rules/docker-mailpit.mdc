@@ -1,0 +1,205 @@
+---
+alwaysApply: true
+---
+# Mailpit Docker Service (Production Configuration)
+
+## Overview
+Mailpit is a lightweight, modern email testing tool used to capture outgoing
+emails from Laravel, FastAPI, Node.js, or other services during development,
+staging, or QA environments.
+
+It provides:
+- SMTP server for applications to send mail to
+- Web UI to preview captured messages
+- API for automation and testing pipelines
+- Optional real SMTP relay (disabled by default)
+
+Mailpit replaces older tools such as MailHog and MailCatcher.
+
+---
+
+## Image
+- **Official image:** `axllent/mailpit:latest`
+- Alpine-based and optimized for small footprint
+
+---
+
+## Ports
+- **1025** – SMTP port (the application sends mail here)
+- **8025** – Web UI (browser email preview)
+
+Example access:
+- http://localhost:8025
+
+---
+
+## Environment Variables (Recommended)
+```bash
+MP_SMTP_BIND_ADDR=0.0.0.0:1025
+MP_UI_BIND_ADDR=0.0.0.0:8025
+MP_DATA_FILE=/data/mailpit.db
+MP_MAX_MESSAGES=5000
+MP_AUTH_FILE=/data/auth.json # Enables basic auth (optional)
+```
+
+### Security Options (Recommended for staging)
+- Enable basic auth:
+```bash
+MP_UI_AUTH=true
+```
+
+- Provide login credentials:
+```bash
+MP_UI_AUTH_USER=admin
+MP_UI_AUTH_PASS=strongpassword123
+```
+
+---
+
+## Volumes
+To persist email history:
+- `/data` — database and auth files
+
+Example:
+```yaml
+volumes:
+  mailpit-data:/data
+```
+
+---
+
+## docker-compose Example
+```yaml
+mailpit:
+  image: axllent/mailpit:latest
+  container_name: mailpit
+  restart: unless-stopped
+  ports:
+    - "8025:8025"
+    - "1025:1025"
+  environment:
+    - MP_SMTP_BIND_ADDR=0.0.0.0:1025
+    - MP_UI_BIND_ADDR=0.0.0.0:8025
+    - MP_MAX_MESSAGES=5000
+    - MP_UI_AUTH=${MP_UI_AUTH:-false}
+    - MP_UI_AUTH_USER=${MP_UI_AUTH_USER:-admin}
+    - MP_UI_AUTH_PASS=${MP_UI_AUTH_PASS:-change-me}
+  volumes:
+    - mailpit_data:/data
+  healthcheck:
+    test: ["CMD", "wget", "-qO-", "http://localhost:8025/api/v1/status"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+  networks:
+    - app-network
+```
+
+---
+
+## Laravel Configuration Example
+Add to `.env`:
+```ini
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=example@test.local
+MAIL_FROM_NAME="Test App"
+```
+
+## FastAPI Configuration Example
+Add to `.env` or environment variables:
+```bash
+SMTP_HOST=mailpit
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASSWORD=
+MAIL_FROM=noreply@example.com
+```
+
+Or in Python code:
+```python
+import smtplib
+from email.mime.text import MIMEText
+
+smtp_host = os.getenv("SMTP_HOST", "mailpit")
+smtp_port = int(os.getenv("SMTP_PORT", "1025"))
+
+msg = MIMEText("Test message")
+msg["Subject"] = "Test"
+msg["From"] = os.getenv("MAIL_FROM", "noreply@example.com")
+msg["To"] = "demo@example.com"
+
+with smtplib.SMTP(smtp_host, smtp_port) as server:
+    server.send_message(msg)
+```
+
+---
+
+## Healthcheck
+Mailpit supports HTTP health:
+```bash
+curl -f http://localhost:8025/api/v1/status
+```
+
+Recommended compose healthcheck:
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "wget --spider --quiet --tries=1 --timeout=3 http://localhost:8025/api/v1/status 2>&1 | grep -q '200\\|401' || exit 1"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 10s
+```
+
+---
+
+## Logs & Debugging
+```bash
+docker compose logs -f mailpit
+```
+
+You should see:
+```
+SMTP listening on :1025
+HTTP API listening on :8025
+```
+
+---
+
+## Notes
+Mailpit is not meant for production email sending.
+
+For real SMTP delivery, configure:
+```makefile
+MP_SMTP_RELAY_HOST=
+MP_SMTP_RELAY_PORT=
+```
+
+Works perfectly with:
+- Laravel Horizon notifications
+- FastAPI background email tasks
+- Node.js Nodemailer integration
+- Python smtplib
+
+---
+
+## Testing
+Send a sample email:
+```bash
+printf "Subject: Test\n\nHello!" \
+  | nc localhost 1025
+```
+
+Or with Laravel:
+```bash
+php artisan tinker
+Mail::raw('Test message', fn($m) => $m->to('demo@example.com')->subject('Test'));
+```
+
+Then open:
+- http://localhost:8025

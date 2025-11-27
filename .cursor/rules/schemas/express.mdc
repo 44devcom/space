@@ -1,0 +1,9 @@
+---
+alwaysApply: false
+---
+Rules for Express.js backend.
+- Use ES modules and async/await.
+- input validation via express-validator or custom middleware.
+- Separate routes, controllers, services.
+- Centralized error handler middleware.
+- No business logic inside controllers.

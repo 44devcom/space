@@ -1,0 +1,11 @@
+---
+globs: *.js
+alwaysApply: false
+---
+Rules for Node.js code.
+- Use ES modules.
+- Async/await for all async operations.
+- camelCase for variables/functions.
+- PascalCase for classes.
+- Avoid callback-style async.
+- Use environment variables via process.env.

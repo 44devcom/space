@@ -1,0 +1,26 @@
+{
+    "version": 1,
+    "tests": {
+    "health": true,
+    "connectivity": true,
+    "endpoints": true,
+    "schema": true,
+    "database": true,
+    "redis": true,
+    "security": true,
+    "performance": false,
+    "fail_on": ["error", "fatal", "panic", "exception"]
+    },
+    "pipelines": {
+        "default": {
+            "steps": [
+                "php-unit",
+                "api-tests",
+                "ui-tests"
+            ]
+        },
+        "ui-tests": {
+            "script": "scripts/run-ui-tests-<tool>.sh"
+        }
+    }
+}

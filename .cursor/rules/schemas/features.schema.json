@@ -1,0 +1,72 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "FeatureSchema",
+    "description": "Schema describing a project feature and its generation parameters.",
+    "type": "object",
+  
+    "properties": {
+      "name": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Za-z0-9]+$",
+        "description": "Feature name in PascalCase."
+      },
+  
+      "description": {
+        "type": "string",
+        "description": "Short description of the feature."
+      },
+  
+      "stacks": {
+        "type": "array",
+        "description": "Stacks for which to generate feature code.",
+        "items": {
+          "type": "string",
+          "enum": ["laravel", "python-fastapi", "node-express", "sql", "docs"]
+        }
+      },
+  
+      "model": {
+        "type": "object",
+        "description": "Optional model definition used by the feature.",
+        "$ref": "./models.schema.json"
+      },
+  
+      "endpoints": {
+        "type": "object",
+        "description": "REST API endpoints belonging to this feature.",
+        "properties": {
+          "crud": {
+            "type": "boolean",
+            "description": "If true, generate full CRUD endpoints."
+          },
+          "custom": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Custom endpoint definition string."
+            }
+          }
+        }
+      },
+  
+      "dependencies": {
+        "type": "array",
+        "description": "Other features required for this feature.",
+        "items": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]+$"
+        }
+      },
+  
+      "files": {
+        "type": "array",
+        "description": "List of additional files to generate inside feature folder.",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+  
+    "required": ["name"]
+  }
+  

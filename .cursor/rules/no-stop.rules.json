@@ -1,0 +1,43 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Global No-Stop Rule",
+    "description": "Applies to all agents, commands, and plan execution.",
+    "type": "object",
+  
+    "properties": {
+      "autoContinue": {
+        "type": "boolean",
+        "default": true,
+        "description": "Automatically continue if chunk limits are reached."
+      },
+      "chunkSize": {
+        "type": "number",
+        "default": 300,
+        "description": "Approximate line size per output chunk."
+      },
+      "noConfirmation": {
+        "type": "boolean",
+        "default": true,
+        "description": "Prevents all agents from asking for user-confirmation."
+      },
+      "noStop": {
+        "type": "boolean",
+        "default": true,
+        "description": "Prevent stopping early due to output length."
+      },
+      "autoReplay": {
+        "type": "boolean",
+        "default": true,
+        "description": "If output is truncated, automatically send the next chunk."
+      }
+    },
+  
+    "required": [
+      "autoContinue",
+      "chunkSize",
+      "noConfirmation",
+      "noStop",
+      "autoReplay"
+    ]
+  }
+  

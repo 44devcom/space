@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "graphql": {
+    "require_descriptions": true,
+    "require_non_null_ids": true,
+    "validate_schema_names": true,
+    "enforce_pascal_case_types": true,
+    "enforce_camel_case_fields": true,
+    "schema_generation_strict": true
+  }
+}
+

@@ -1,0 +1,52 @@
+{
+  "$schema": "../.cursor/rules/models.schema.json",
+  "title": "Car",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The id field."
+    },
+    "make": {
+      "type": "string",
+      "description": "The make field."
+    },
+    "model": {
+      "type": "string",
+      "description": "The model field."
+    },
+    "year": {
+      "type": "integer",
+      "description": "The year field."
+    },
+    "color": {
+      "type": "string",
+      "description": "The color field."
+    },
+    "price": {
+      "type": "number",
+      "description": "The price field."
+    },
+    "mileage": {
+      "type": "number",
+      "description": "The mileage field."
+    },
+    "vin": {
+      "type": "string",
+      "description": "The vin field."
+    },
+    "isAvailable": {
+      "type": "boolean",
+      "description": "The isAvailable field."
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The features field."
+    }
+  },
+  "required": ["id", "make", "model", "year"]
+}
+

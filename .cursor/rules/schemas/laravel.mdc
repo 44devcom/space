@@ -1,0 +1,10 @@
+---
+alwaysApply: false
+---
+Rules for Laravel development.
+- PSR-12 and Laravel conventions.
+- Controllers thin; business logic in Services.
+- Use Request classes for validation.
+- Use Resources for API formatting.
+- Factories + Seeders for testing.
+- Prefer Eloquent relationships.

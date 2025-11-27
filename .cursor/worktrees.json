@@ -1,0 +1,148 @@
+{
+  "version": 3,
+
+  "fastapi": {
+    "stack": "fastapi",
+    "language": "python",
+    "root": ".",
+    "src": "src",
+    "domain": "src/domain",
+    "entities": "src/domain/entities",
+    "valueObjects": "src/domain/value_objects",
+    "aggregates": "src/domain/aggregates",
+    "events": "src/domain/events",
+    "repositories": "src/domain/repositories",
+    "services": "src/domain/services",
+
+    "api": {
+      "routes": "src/api/routes",
+      "controllers": "src/api/controllers",
+      "schemas": "src/api/schemas",
+      "graphql": "src/api/graphql",
+      "openapi": "src/api/openapi"
+    },
+
+    "infrastructure": {
+      "db": "src/infrastructure/db",
+      "orm": "src/infrastructure/db/orm",
+      "migrations": "src/infrastructure/db/migrations"
+    },
+
+    "tests": {
+      "unit": "tests/unit",
+      "bdd": "tests/bdd/features",
+      "bddSteps": "tests/bdd/steps",
+      "tdd": "tests/unit",
+      "integration": "tests/integration"
+    },
+
+    "docker": {
+      "root": "docker",
+      "compose": "docker/docker-compose.yml",
+      "env": "docker/.env",
+      "services": "docker/services"
+    },
+
+    "setup-worktree": [
+      "python3 -m venv venv",
+      "source venv/bin/activate && pip install -r requirements.txt || true",
+      "cp $ROOT_WORKTREE_PATH/.env .env || true"
+    ]
+  },
+
+  "laravel": {
+    "stack": "laravel",
+    "language": "php",
+    "root": ".",
+    "src": "app",
+    "domain": "app/Domain",
+    "entities": "app/Domain/Entities",
+    "valueObjects": "app/Domain/ValueObjects",
+    "aggregates": "app/Domain/Aggregates",
+    "events": "app/Domain/Events",
+    "repositories": "app/Domain/Repositories",
+    "services": "app/Domain/Services",
+
+    "api": {
+      "controllers": "app/Http/Controllers",
+      "routes": "routes",
+      "graphql": "graphql",
+      "openapi": "storage/api"
+    },
+
+    "infrastructure": {
+      "db": "database",
+      "orm": "app/Models",
+      "migrations": "database/migrations"
+    },
+
+    "tests": {
+      "unit": "tests/Unit",
+      "feature": "tests/Feature",
+      "bdd": "tests/Bdd/features",
+      "bddSteps": "tests/Bdd/steps",
+      "tdd": "tests/Unit"
+    },
+
+    "docker": {
+      "root": "docker",
+      "compose": "docker/docker-compose.yml",
+      "env": ".env",
+      "services": "docker/services"
+    },
+
+    "setup-worktree": [
+      "composer install || true",
+      "php artisan key:generate || true",
+      "cp $ROOT_WORKTREE_PATH/.env .env || true"
+    ]
+  },
+
+  "express": {
+    "stack": "express",
+    "language": "typescript",
+    "root": ".",
+    "src": "src",
+    "domain": "src/domain",
+    "entities": "src/domain/entities",
+    "valueObjects": "src/domain/value_objects",
+    "aggregates": "src/domain/aggregates",
+    "events": "src/domain/events",
+    "repositories": "src/domain/repositories",
+    "services": "src/domain/services",
+
+    "api": {
+      "controllers": "src/api/controllers",
+      "routes": "src/api/routes",
+      "middlewares": "src/api/middlewares",
+      "graphql": "src/api/graphql",
+      "openapi": "src/api/openapi"
+    },
+
+    "infrastructure": {
+      "db": "src/infrastructure/db",
+      "orm": "src/infrastructure/db/typeorm",
+      "migrations": "src/infrastructure/db/migrations"
+    },
+
+    "tests": {
+      "unit": "tests/unit",
+      "bdd": "tests/bdd/features",
+      "bddSteps": "tests/bdd/steps",
+      "tdd": "tests/unit",
+      "integration": "tests/integration"
+    },
+
+    "docker": {
+      "root": "docker",
+      "compose": "docker/docker-compose.yml",
+      "env": ".env",
+      "services": "docker/services"
+    },
+
+    "setup-worktree": [
+      "npm install || yarn install",
+      "cp $ROOT_WORKTREE_PATH/.env .env || true"
+    ]
+  }
+}

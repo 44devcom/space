@@ -1,0 +1,280 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: car-market-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-cars}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-secret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - car-market-network
+    restart: unless-stopped
+
+  queue:
+    image: redis:7-alpine
+    container_name: car-market-queue
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - queue_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - car-market-network
+    restart: unless-stopped
+
+  cache:
+    image: redis:7-alpine
+    container_name: car-market-cache
+    ports:
+      - "6380:6379"
+    volumes:
+      - cache_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - car-market-network
+    restart: unless-stopped
+
+  mail:
+    image: axllent/mailpit:latest
+    container_name: car-market-mail
+    ports:
+      - "${MAIL_PORT:-1025}:1025"
+      - "${MAIL_UI_PORT:-8025}:8025"
+    environment:
+      MP_SMTP_BIND_ADDR: "0.0.0.0:1025"
+      MP_WEB_BIND_ADDR: "0.0.0.0:8025"
+    networks:
+      - car-market-network
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    container_name: car-market-api
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-cars}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      REDIS_HOST: queue
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      MAIL_HOST: mail
+      MAIL_PORT: 1025
+      MAIL_USER: ${MAIL_USER:-null}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-null}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@cars.com}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-http://localhost}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      queue:
+        condition: service_healthy
+      mail:
+        condition: service_started
+    networks:
+      - car-market-network
+    restart: unless-stopped
+    volumes:
+      - ../src:/app/src:ro
+      - ../tests:/app/tests:ro
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    container_name: car-market-worker
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-cars}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      REDIS_HOST: queue
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      CELERY_BROKER_URL: redis://queue:6379/0
+      CELERY_RESULT_BACKEND: redis://queue:6379/0
+      MAIL_HOST: mail
+      MAIL_PORT: 1025
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-4}
+      WORKER_QUEUES: ${WORKER_QUEUES:-listings,filters,alerts,bulk,parsing}
+      WORKER_LOGLEVEL: ${WORKER_LOGLEVEL:-info}
+      APP_ENV: ${APP_ENV:-production}
+    depends_on:
+      db:
+        condition: service_healthy
+      queue:
+        condition: service_healthy
+      api:
+        condition: service_started
+    networks:
+      - car-market-network
+    restart: unless-stopped
+    volumes:
+      - ../src:/app/src:ro
+      - ../tests:/app/tests:ro
+    command: ["python", "-m", "src.workers.celery_worker"]
+    healthcheck:
+      test: ["CMD", "celery", "-A", "src.workers.celery_app", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      replicas: 1
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    container_name: car-market-celery-beat
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-cars}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      REDIS_HOST: queue
+      REDIS_PORT: 6379
+      CELERY_BROKER_URL: redis://queue:6379/0
+      CELERY_RESULT_BACKEND: redis://queue:6379/0
+      APP_ENV: ${APP_ENV:-production}
+    depends_on:
+      db:
+        condition: service_healthy
+      queue:
+        condition: service_healthy
+    networks:
+      - car-market-network
+    restart: unless-stopped
+    volumes:
+      - ../src:/app/src:ro
+      - celery-beat-data:/var/lib/celery
+    command: ["python", "-m", "src.workers.celery_beat"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  flower:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    container_name: car-market-flower
+    environment:
+      CELERY_BROKER_URL: redis://queue:6379/0
+      CELERY_RESULT_BACKEND: redis://queue:6379/0
+      FLOWER_PORT: 5555
+      FLOWER_BASIC_AUTH: ${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    depends_on:
+      queue:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    networks:
+      - car-market-network
+    restart: unless-stopped
+    command: ["celery", "-A", "src.workers.celery_app", "flower", "--port=5555"]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5555"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  nginx:
+    image: nginx:alpine
+    container_name: car-market-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - certbot-www:/var/www/certbot:ro
+      - certbot-conf:/etc/letsencrypt:ro
+    depends_on:
+      - api
+    networks:
+      - car-market-network
+    restart: unless-stopped
+    command: ["nginx", "-g", "daemon off;"]
+
+  certbot:
+    image: certbot/certbot
+    container_name: car-market-certbot
+    volumes:
+      - certbot-www:/var/www/certbot:ro
+      - certbot-conf:/etc/letsencrypt:rw
+    networks:
+      - car-market-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+  nextjs:
+    build:
+      context: ..
+      dockerfile: docker/gui/nextjs/Dockerfile
+    container_name: car-market-nextjs
+    environment:
+      API_URL: http://api:8000
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NODE_ENV: production
+    ports:
+      - "${NEXTJS_PORT:-3001}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - car-market-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  car-market-network:
+    driver: bridge
+
+volumes:
+  db_data:
+  queue_data:
+  cache_data:
+  certbot-www:
+  certbot-conf:
+  celery-beat-data:
+

@@ -1,0 +1,250 @@
+---
+alwaysApply: true
+---
+# testing.mdc
+
+# Ultra-Fast Docker Test Execution Rules
+
+This document defines the **Fast Testing Execution Rules** for the Docker Test Master System.  
+These rules ensure the test process is:
+
+✅ As fast as possible  
+✅ Stops immediately on first failure  
+✅ Tells the operator *exactly what to fix*  
+✅ Allows re-running **only the failed test**, not the whole suite  
+✅ Moves to the next test automatically once the previous one passes
+
+This is designed for extremely tight iteration loops.
+
+---
+
+# 1. Test Pipeline Philosophy
+
+1. **Fail Fast** — Stop on the first error.  
+2. **Isolate Failures** — Identify the exact test that failed.  
+3. **Fix-Only Mode** — Allow re-running only the failed test.  
+4. **Resume Mode** — After the fix, continue where it left off.  
+5. **Zero Redundancy** — Never repeat successful tests.  
+6. **Speed Priority** — Cache builds, reuse containers unless the test demands rebuild.
+
+---
+
+# 2. Execution Modes
+
+## Mode A: Full Run (default)
+Runs all tests sequentially:
+```
+health → connectivity → models → schemas → endpoints → database → redis → security
+```
+Stops immediately at first failing test.
+
+## Mode B: Fix-Only Run
+Reruns **only the failing test**:
+```
+./test-runner.sh --fix
+```
+Reads:
+```
+tests/docker/results/last_failed_test
+```
+And executes that test only.
+
+## Mode C: Resume Run
+Continues from the last passing test, starting at the next test.
+```
+./test-runner.sh --resume
+```
+Reads:
+```
+tests/docker/results/progress_state.json
+```
+And resumes from that point.
+
+---
+
+# 3. Test Stages (Ordered)
+
+The pipeline must run tests in this exact order:
+
+1. **Health Tests**
+2. **Connectivity Tests**
+3. **Database Schema Tests**
+4. **Redis Tests**
+5. **Model Tests (Laravel & FastAPI)**
+6. **JSON Schema Validation**
+7. **OpenAPI Schema Validation**
+8. **Endpoint Contract Tests**
+9. **Security Tests** (Nginx, Laravel, FastAPI)
+10. **(Optional) Performance Tests**
+
+Each stage MUST:
+- write its result to `results/stage_<name>.log`
+- update `progress_state.json`
+- update `last_passed_test`
+- on error, write `last_failed_test`
+
+---
+
+# 4. Fail-Fast Behavior
+
+The system must stop *immediately* when:
+- any test script exits with non-zero code
+- any log line matches:
+  - "error"
+  - "fatal"
+  - "panic"
+  - "exception"
+
+On failure:
+1. Write failing stage name to:
+   - `results/last_failed_test`
+2. Write diagnostic info to:
+   - `results/errors.log`
+3. Print:
+```
+❌ TEST FAILED: <stage>
+Use:
+  ./test-runner.sh --fix
+To rerun only the failing test.
+```
+4. Exit immediately.
+
+---
+
+# 5. Fix-Only Test Logic
+
+When running:
+```
+./test-runner.sh --fix
+```
+Workflow:
+1. Read `last_failed_test`
+2. Execute only that stage
+3. If passes:
+   - remove `last_failed_test`
+   - update progress
+   - print success
+4. If still failing:
+   - update `errors.log`
+   - stop again
+
+This enables ultra-fast fixing loops.
+
+---
+
+# 6. Resume Logic
+
+When running:
+```
+./test-runner.sh --resume
+```
+The script must:
+- read `progress_state.json`
+- skip tests that already passed
+- start at next untested test
+
+If all tests passed:
+```
+✔ All tests already passed. Nothing to resume.
+```
+
+---
+
+# 7. Progress State Format
+
+`progress_state.json` example:
+```json
+{
+  "health": "passed",
+  "connectivity": "passed",
+  "models": "passed",
+  "schemas": "pending",
+  "endpoints": "pending",
+  "database": "pending",
+  "redis": "pending",
+  "security": "pending"
+}
+```
+
+---
+
+# 8. Test Success Behavior
+
+On each success:
+- update `progress_state.json`
+- update `last_passed_test`
+- delete `last_failed_test` if exists
+
+On full success:
+```
+🎉 ALL TESTS PASSED SUCCESSFULLY
+```
+
+---
+
+# 9. Speed Optimization Rules
+
+1. Only rebuild service images if Dockerfiles changed
+2. Reuse containers for fix-only mode
+3. Cache OpenAPI schema files
+4. Cache JSON schema snapshots
+5. Avoid restarting MySQL/Redis unless necessary
+6. Skip schema tests if no API/model changes detected
+7. Skip endpoint tests if route definitions unchanged
+
+---
+
+# 10. Developer Commands Summary
+
+## Full Run
+```
+/create docker-test
+```
+
+## Fix-Only
+```
+./test-runner.sh --fix
+```
+
+## Resume
+```
+./test-runner.sh --resume
+```
+
+## Full Clean Run
+```
+./test-runner.sh --clean
+```
+
+## Reset
+```
+rm -f tests/docker/results/last_failed_test
+rm -f tests/docker/results/progress_state.json
+```
+
+---
+
+# 11. Test Success Definition
+A test is considered successful if:
+- exit code = 0
+- no forbidden patterns in logs
+- schema checks passed
+- connectivity tests returned 200 OK
+
+---
+
+# 12. Test Failure Definition
+A test fails if:
+- exit code != 0
+- logs contain any fail patterns
+- schema mismatch
+- 4xx/5xx responses
+
+---
+
+# 13. Integrations
+This rule file integrates with:
+- Docker Test Master Agent
+- docker-test.rules.json
+- schema-validation.rules.json
+- tests.rules.json

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "bdd": {
+    "require_user_stories": true,
+    "require_feature_files": true,
+    "gherkin_strict": true,
+    "enforce_given_when_then": true,
+    "fail_on_incomplete_scenarios": true,
+    "auto_generate_step_definitions": true
+  },
+  "mvc-controller": {
+    "features": [
+      "Controller list endpoint returns items",
+      "Create endpoint validates input",
+      "Update endpoint modifies existing record",
+      "Show endpoint returns single record",
+      "Delete endpoint removes record"
+    ]
+  }
+}
+

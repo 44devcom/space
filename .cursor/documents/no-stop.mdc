@@ -1,0 +1,23 @@
+---
+alwaysApply: true
+---
+# Global No-Stop Guarantee
+
+This workspace is configured so the AI:
+
+- never stops output early
+- never pauses to ask for confirmation
+- automatically streams in chunks
+- resumes automatically if truncated
+- continues until everything is delivered
+
+This applies to:
+- Wizards
+- Plans
+- Agents
+- File generators
+- ZIP creators
+- Docker builders
+- Schema generators
+- MVC/CRUD creators
+- Test generators

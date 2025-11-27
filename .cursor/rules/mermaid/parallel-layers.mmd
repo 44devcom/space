@@ -1,0 +1,17 @@
+flowchart TB
+
+subgraph M["Milestone: {{milestone.title}}"]
+direction TB
+
+{{#layers}}
+  subgraph L{{index}}["Layer {{index}}"]
+  direction LR
+
+  {{#tasks}}
+    T_{{id}}["{{title}} ({{type}}{{#parallelSafe}}, parallel{{/parallelSafe}})"]
+  {{/tasks}}
+
+  end
+{{/layers}}
+
+end

@@ -1,0 +1,74 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "FTP Deploy Rules",
+    "type": "object",
+  
+    "properties": {
+  
+      "connection": {
+        "type": "object",
+        "required": ["host", "port", "username", "password", "remotePath"],
+        "properties": {
+          "host": { "type": "string" },
+          "port": { "type": "number", "default": 21 },
+          "username": { "type": "string" },
+          "password": { "type": "string" },
+          "secure": { "type": "boolean", "default": false },
+          "remotePath": { "type": "string" }
+        }
+      },
+  
+      "localBuild": {
+        "description": "Local build commands before FTP upload",
+        "type": "array",
+        "items": { "type": "string" },
+        "default": [
+          "npm install --production || true",
+          "composer install --no-dev || true",
+          "npm run build || true"
+        ]
+      },
+  
+      "upload": {
+        "description": "Rules for uploading files",
+        "type": "object",
+        "properties": {
+          "exclude": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": [
+              "node_modules/",
+              ".git/",
+              "tests/"
+            ]
+          },
+          "deleteOrphans": { "type": "boolean", "default": false }
+        }
+      },
+  
+      "remoteRebuild": {
+        "description": "Endpoint for triggering remote rebuild after FTP upload",
+        "type": "object",
+        "required": ["url", "method"],
+        "properties": {
+          "url": { "type": "string" },
+          "method": { "type": "string", "enum": ["POST", "GET"], "default": "POST" },
+          "authHeader": { "type": "string" },
+          "payload": { "type": "object" }
+        }
+      },
+  
+      "healthcheck": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string" },
+          "expectedStatus": { "type": "number", "default": 200 },
+          "timeoutSeconds": { "type": "number", "default": 15 }
+        }
+      }
+    },
+  
+    "required": ["connection", "remoteRebuild", "healthcheck"]
+  }
+  

@@ -1,0 +1,6 @@
+{
+    "prependDirectives": [
+      "⚠️ GLOBAL NO-STOP DIRECTIVE\nDo not stop generating.\nDo not ask for confirmation.\nIf output is truncated, automatically continue with the next chunk.\nContinue until ALL content is generated.\nNever wait for user input."
+    ]
+  }
+  

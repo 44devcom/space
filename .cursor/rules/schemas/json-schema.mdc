@@ -1,0 +1,112 @@
+---
+globs: 
+  - "schemas/models/*.json"
+  - "schemas/relations/*.json"
+alwaysApply: false
+---
+
+# JSON Schema Validation Rules  
+These rules validate all model and relation definitions using  
+`models.schema.json` and `relations.schema.json`.
+
+## Validation Logic  
+- Files inside `schemas/models/` **must validate** against `models.schema.json`
+- Files inside `schemas/relations/` **must validate** against `relations.schema.json`
+- All files must follow JSON Schema best practices defined below.
+
+## Model Schema Validation  
+If file path matches `schemas/models/*.json`, enforce:
+
+```json
+{
+  "$ref": "../rules/models.schema.json"
+}
+```
+
+Rules enforced:
+- Field definitions must use supported JSON types.
+- No relation definitions are allowed inside models.
+- Custom metadata must be under `x-*` fields.
+- Required fields must reference declared properties.
+- Model `title` must match the filename (recommended).
+
+## Relation Schema Validation  
+If file path matches `schemas/relations/*.json`, enforce:
+
+```json
+{
+  "$ref": "../rules/relations.schema.json"
+}
+```
+
+Rules enforced:
+- Only relation objects are permitted.
+- Allowed `type` values:  
+  `one-to-one`, `one-to-many`, `many-to-one`, `many-to-many`, `polymorphic`, `self`
+- Many-to-many relationships must specify `fromField`, `toField`, and `through`.
+- Polymorphic relationships must include `polymorphicTypes`, `typeField`, and `idField`.
+
+---
+
+# General JSON Schema Rules
+
+These conventions apply to *all* JSON files:
+
+## ✔ Naming Rules
+- Use **camelCase** for all field names.
+- Use **PascalCase** for model names (`title` fields).
+
+## ✔ Required Structure
+Every schema must define:
+
+- `$schema` — recommended: `"http://json-schema.org/draft-07/schema#"`
+- `title` — model or schema name
+- `type`: `"object"`
+- `properties`: field definitions
+- `required`: explicit required fields array
+
+## ✔ Field Best Practices
+- Always add `"description"` for properties.
+- When applicable, use:
+  - `minLength`, `maxLength`
+  - `minimum`, `maximum`
+  - `enum`
+  - `format` (email, uuid, date-time)
+- Use nested objects for logical groupings.
+- Use `items` for array validation.
+- Use `default` only for *static* default values.
+- Allow custom extensions using `"x-*"` fields.
+
+---
+
+# Structure Template
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExampleModel",
+  "type": "object",
+  "properties": {
+    "exampleField": {
+      "type": "string",
+      "description": "Explanation of the field."
+    }
+  },
+  "required": ["exampleField"]
+}
+```
+
+---
+
+# Notes for Cursor AI  
+- Do **not** mix relations into model files.  
+- Do **not** include foreign key definitions in models.  
+- Relations must be declared exclusively in `relations.json` files.  
+- Models must contain only field definitions and metadata.  
+
+This separation allows Cursor to:  
+- safely generate migrations  
+- infer ORMs  
+- create consistent type systems  
+- avoid duplication  
+- maintain a clear source of truth  

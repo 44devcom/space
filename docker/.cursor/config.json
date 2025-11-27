@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "docker": {
+      "linting": true,
+      "compose": true,
+      "ignore": [
+        "node_modules",
+        "vendor",
+        "storage",
+        "bootstrap/cache"
+      ]
+    }
+  }
+  

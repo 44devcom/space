@@ -1,0 +1,11 @@
+---
+globs: *.py
+alwaysApply: false
+---
+Rules for Python code.
+- Follow PEP 8.
+- snake_case for variables and functions.
+- PascalCase for classes.
+- Type hints required.
+- Docstrings for all public methods.
+- Use pathlib instead of os.path.

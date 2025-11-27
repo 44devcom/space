@@ -1,0 +1,49 @@
+{
+  "version": 2,
+  "plan": {
+    "require_title": true,
+    "require_epics": true,
+    "require_tasks": true,
+    "require_subtasks": true,
+    "steps_must_be_ordered": true,
+    "validate_dependencies": true,
+    "generate_language_specific_output": true,
+    "link_into_wizard_pipeline": true
+  },
+  "parallel": {
+    "enabled": true,
+    "maxWorkers": 6,
+    "defaultStrategy": "per-milestone", 
+    "agentSafety": {
+      "ddd": false,
+      "schema": true,
+      "event": true,
+      "mvc": true,
+      "mvc-model": true,
+      "mvc-view": true,
+      "mvc-controller": true,
+      "crud": false,
+      "orm": false,
+      "openapi": true,
+      "graphql": true,
+      "docker": false,
+      "docker-test": true,
+      "bdd": true,
+      "tdd": true,
+      "tests": true,
+      "ui-tests": true,
+      "ui-runner": true,
+      "ui-ci": true,
+      "ui-docker": false,
+      "gui": true,
+      "gui-desktop-pyside6": true,
+      "gui-mobile-kotlin": true,
+      "gui-web-next": true,
+      "ssl": false,
+      "nginx": false,
+      "certbot": false,
+      "custom": false
+    }
+  }
+}
+

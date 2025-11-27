@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UI Testing Rules",
+  "type": "object",
+  "properties": {
+    "defaultTool": {
+      "type": "string",
+      "enum": ["playwright", "puppeteer", "selenium"],
+      "default": "playwright"
+    },
+    "autoDetectStack": {
+      "type": "boolean",
+      "default": true
+    },
+    "toolSelection": {
+      "description": "Stack-based tool preference",
+      "type": "object",
+      "default": {
+        "react": "playwright",
+        "vue": "playwright",
+        "nextjs": "playwright",
+        "nuxt": "playwright",
+        "express": "playwright",
+        "fastapi": "playwright",
+        "laravel": "playwright",
+        "legacy-java": "selenium",
+        "legacy-php": "selenium",
+        "chrome-only": "puppeteer"
+      }
+    },
+    "dockerImages": {
+      "type": "object",
+      "properties": {
+        "playwright": {
+          "type": "string",
+          "default": "mcr.microsoft.com/playwright:v1.40"
+        },
+        "puppeteer": {
+          "type": "string",
+          "default": "browserless/chrome:latest"
+        },
+        "selenium": {
+          "type": "string",
+          "default": "selenium/standalone-chrome:latest"
+        }
+      }
+    }
+  },
+  "required": ["defaultTool", "dockerImages"]
+}

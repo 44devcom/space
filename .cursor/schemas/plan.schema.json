@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GitHub Project Oriented Plan Schema",
+  "description": "Schema for GitHub-style project plans with milestones, issues, tasks, and subtasks",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "object",
+      "description": "Root project metadata",
+      "required": ["id", "title", "description"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique project identifier (slug format)",
+          "minLength": 1,
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable project title",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "description": "Project description",
+          "minLength": 1
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domain/bounded context name"
+        },
+        "stack": {
+          "type": "string",
+          "description": "Technology stack (laravel, node, fastapi, generic)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of plan creation"
+        }
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "description": "Project milestones containing issues",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "issues"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique milestone identifier",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Milestone title",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "description": "Milestone description"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Optional milestone due date"
+          },
+          "issues": {
+            "type": "array",
+            "description": "Issues within this milestone",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "title", "tasks"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique issue identifier",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Issue title",
+                  "minLength": 1
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Issue description"
+                },
+                "labels": {
+                  "type": "array",
+                  "description": "GitHub-style labels",
+                  "items": { "type": "string" }
+                },
+                "assignees": {
+                  "type": "array",
+                  "description": "Assigned user identifiers",
+                  "items": { "type": "string" }
+                },
+                "dependsOn": {
+                  "type": "array",
+                  "description": "Issue IDs this issue depends on",
+                  "items": { "type": "string" }
+                },
+                "tasks": {
+                  "type": "array",
+                  "description": "Tasks within this issue",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "title"],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique task identifier",
+                        "minLength": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "description": "Task title",
+                        "minLength": 1
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "Task type determining which agent handles execution",
+                        "enum": [
+                          "ddd", "mvc", "mvc-model", "mvc-view", "mvc-controller",
+                          "crud", "orm", "schema", "event", "feature",
+                          "openapi", "graphql",
+                          "docker", "docker-test",
+                          "bdd", "tdd", "tests",
+                          "ui-docker", "ui-tests", "ui-runner", "ui-ci",
+                          "gui", "gui-desktop-pyside6", "gui-mobile-kotlin", "gui-web-next",
+                          "ssl", "nginx", "certbot",
+                          "custom"
+                        ]
+                      },
+                      "priority": {
+                        "type": "integer",
+                        "description": "Task priority (lower = higher priority)",
+                        "minimum": 1
+                      },
+                      "status": {
+                        "type": "string",
+                        "description": "Current task status",
+                        "enum": ["pending", "in-progress", "done", "blocked"],
+                        "default": "pending"
+                      },
+                      "dependsOn": {
+                        "type": "array",
+                        "description": "Task IDs this task depends on",
+                        "items": { "type": "string" }
+                      },
+                      "subtasks": {
+                        "type": "array",
+                        "description": "Subtasks providing detailed action hints",
+                        "items": {
+                          "type": "object",
+                          "required": ["id", "action"],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique subtask identifier",
+                              "minLength": 1
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "Action description",
+                              "minLength": 1
+                            },
+                            "details": {
+                              "type": "string",
+                              "description": "Additional details for the action"
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Optional subtask type hint"
+                            },
+                            "dependsOn": {
+                              "type": "array",
+                              "description": "Subtask IDs this subtask depends on",
+                              "items": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["project", "milestones"]
+}

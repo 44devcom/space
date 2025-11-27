@@ -1,0 +1,140 @@
+# Docker Playwright UI Testing Service
+
+## Purpose
+
+Define a **Dockerized Playwright test runner** service that can:
+
+- Run E2E/UI tests against your app (Laravel / Express / FastAPI / any HTTP stack)
+- Produce screenshots, videos, and traces
+- Run locally, in CI, or via `/run plan` tasks
+- Integrate with the existing `docker-compose.yml`
+
+The service is called `ui-tests-playwright` by default.
+
+---
+
+## Inputs for the Agent
+
+When generating this service, the Docker agent should accept:
+
+- `serviceName` (default: `ui-tests-playwright`)
+- `baseUrl` (default: `http://api:80`)
+- `testDir` (default: `tests/ui`)
+- `reportsDir` (default: `reports/ui`)
+- `nodeVersion` (default: `18`)
+
+---
+
+## Generated Files
+
+- `docker/ui/playwright/Dockerfile`
+- `docker-compose.ui-tests.playwright.yml` **fragment** or inline snippet
+- `tests/ui/playwright.config.ts` (if using TS)
+- `tests/ui/example.spec.ts`
+- `scripts/run-ui-tests-playwright.sh`
+
+---
+
+## Dockerfile Template (Playwright)
+
+```Dockerfile
+# docker/ui/playwright/Dockerfile
+
+FROM mcr.microsoft.com/playwright:v1.44.0-jammy
+
+# Create app directory
+WORKDIR /app
+
+# Install dependencies (assuming package.json exists at repo root)
+COPY package*.json ./
+RUN npm install --omit=dev --silent || npm install --silent
+
+# Copy tests and config
+COPY tests/ui ./tests/ui
+COPY playwright.config.* ./ || true
+
+# Default environment variables (can be overridden)
+ENV BASE_URL=${BASE_URL:-http://api:80}
+ENV CI=1
+
+# Run as non-root user for security (playwright image provides 'pwuser')
+USER pwuser
+
+# Default command can be overridden by docker-compose
+CMD ["npx", "playwright", "test", "--reporter=line"]
+```
+
+## docker-compose Service Snippet (Playwright)
+
+```yaml
+# docker-compose fragment for Playwright UI tests
+
+services:
+  ui-tests-playwright:
+    build:
+      context: .
+      dockerfile: docker/ui/playwright/Dockerfile
+    container_name: ui-tests-playwright
+    environment:
+      BASE_URL: ${UI_TEST_BASE_URL:-http://api:80}
+      # Optional: force headless in CI
+      PLAYWRIGHT_HEADLESS: "1"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - default
+    volumes:
+      - ./tests/ui:/app/tests/ui:ro
+      - ./reports/ui:/app/reports/ui
+    # This is useful for CI where you run once and exit
+    command: >
+      sh -c "npx playwright install --with-deps &&
+             npx playwright test --reporter=line"
+```
+
+## Healthcheck (Optional)
+
+If you want a healthcheck (mainly for long-running containers; tests are usually short-lived):
+
+```yaml
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/last_playwright_run || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+(Agent may choose to mark success by touching /tmp/last_playwright_run after tests.)
+
+## Test Runner Script
+
+```bash
+# scripts/run-ui-tests-playwright.sh
+#!/usr/bin/env bash
+set -euo pipefail
+
+docker compose run --rm ui-tests-playwright "$@"
+```
+
+## Usage:
+
+```bash
+bash scripts/run-ui-tests-playwright.sh
+bash scripts/run-ui-tests-playwright.sh --grep "@smoke"
+```
+
+## Agent Instructions
+When a task.type is ui-docker and uiTestingTool = playwright:
+
+Generate Dockerfile from this template.
+
+Add or merge service into docker-compose.
+
+Generate scripts/run-ui-tests-playwright.sh.
+
+When task.type is ui-tests:
+
+Generate sample Playwright tests under tests/ui.
+
+Generate playwright.config.* pointing use.baseURL to BASE_URL.
+
+Wire into tests milestone so /run plan can execute UI tests.

@@ -1,0 +1,13 @@
+flowchart LR
+
+A["Client"] --> B["Nginx Port 443 (SSL)"]
+A --> C["Nginx Port 80 (ACME Challenge)"]
+
+C -->|"Serve<br>/.well-known/acme-challenge/"| E["ACME Directory<br>/var/www/letsencrypt"]
+
+B -->|"Proxy"| F["API / Web App"]
+
+B -->|"SSL/TLS<br>TLSv1.2/TLSv1.3"| G["Let's Encrypt<br>Certificates"]
+
+G -->|"Certificate<br>Renewal"| H["Certbot Service"]
+

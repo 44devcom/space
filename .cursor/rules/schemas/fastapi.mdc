@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+---
+Rules for FastAPI projects.
+- Use Pydantic v2 models.
+- snake_case for internal code; camelCase via aliases for JSON.
+- Separate routers, services, schemas.
+- Dependency injection using Depends.
+- Use BackgroundTasks for async heavy tasks.

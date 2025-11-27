@@ -1,0 +1,37 @@
+{
+    "version": 1,
+    "docker": {
+    "lint": true,
+    "dockerfile_schema": {
+    "require_healthcheck": true,
+    "require_non_root_user": true,
+    "require_pin_versions": true,
+    "disallow_latest": true,
+    "multi_stage_required": true
+    },
+    "best_practices": {
+    "no_root_user": true,
+    "no_cache_in_prod": true,
+    "copy_exact_files": true,
+    "limit_layers": true,
+    "label_maintainer_required": true,
+    "no_secret_env_vars": true
+    },
+    "security": {
+    "scan_images": true,
+    "require_distroless_for_prod": false
+    },
+    "uiTestService": {
+    "depends_on": ["api"],
+    "image": "{{dockerImages[tool]}}",
+    "entrypoint": "/bin/sh run-ui-tests.sh",
+    "volumes": [
+        "./tests/ui:/tests/ui",
+        "./reports/ui:/reports/ui"
+    ],
+    "environment": {
+        "BASE_URL": "http://api:80"
+    }
+    }
+    }
+    }

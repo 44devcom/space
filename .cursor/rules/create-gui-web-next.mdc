@@ -1,0 +1,98 @@
+# Next.js Web GUI Rules
+
+## Purpose
+Generate a fully modern **React/Next.js 14 (App Router)** web interface.
+
+## Output Structure
+
+```
+gui/
+web/
+next/
+app/
+components/
+lib/
+styles/
+```
+
+## Requirements
+
+### Stack:
+- Next.js 14 (App Router)
+- ShadCN UI (required)
+- Tailwind CSS
+- Mermaid.js rendering
+- React Query
+- Zustand or Jotai for state
+- Monaco Editor embed for JSON editing
+
+### Required Screens:
+- Dashboard
+- Plan viewer
+- Plan JSON editor
+- DAG / Layer (parallel) visualizer
+- Logs viewer
+- Agent runner console
+- Worktree inspector
+- Settings
+- SSL & Certificates (SSL Certificate Manager)
+
+### Required Components:
+- MermaidRenderer.tsx
+- TreeView.tsx
+- TerminalConsole.tsx
+- JSONEditor.tsx
+- TaskStatusBadge.tsx
+- ExecutionTimeline.tsx
+- SSLStatusCard.tsx
+- SSLCertTimeline.tsx
+- SSLActionButtons.tsx
+- NginxConfigEditor.tsx
+
+### Integration
+- UI must call backend APIs that map to:
+  - `/api/run-plan`
+  - `/api/preview-plan`
+  - `/api/agent/<name>`
+  - `/api/plan/<id>`
+  - `/api/ssl/status` (GET - SSL certificate status)
+  - `/api/ssl/enable` (POST - Run initial certificate request)
+  - `/api/ssl/renew` (POST - Renew certificates)
+  - `/api/ssl/reload-nginx` (POST - Reload Nginx configuration)
+  - `/api/ssl/nginx-config` (GET - Fetch Nginx SSL config)
+  - `/api/ssl/nginx-config` (POST - Save Nginx SSL config)
+- Must support:
+  - Live updates (SSE or WebSocket)
+  - Parallel task visualization
+  - Task logs
+  - Theme switching
+
+### SSL & Certificates Screen Requirements
+
+The "SSL & Certificates" page MUST include:
+
+- Display of current certificate status:
+  - domain
+  - issuer
+  - not_before / not_after
+  - days until expiry
+- Buttons:
+  - "Run initial certificate request"
+  - "Renew certificates"
+  - "Reload Nginx"
+- Display of certbot logs (tail of docker logs)
+- Warning when < 30 days remaining before expiry
+- Interactive Nginx SSL config editor (NginxConfigEditor component):
+  - Uses Monaco Editor for syntax highlighting (language="nginx")
+  - Buttons: "Load latest", "Save & Test", "Save, Test & Reload"
+  - Status area showing:
+    - Nginx parse result (`nginx -t`)
+    - Any error lines
+    - Reload status
+
+All SSL API responses must be shown in a console/logs panel.
+
+## Styling
+- Must use ShadCN UI kit.
+- Consistent dark/light variant support.
+- Minimalistic professional UI.

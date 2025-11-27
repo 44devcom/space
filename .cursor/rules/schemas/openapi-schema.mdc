@@ -1,0 +1,22 @@
+---
+alwaysApply: true
+---
+# OpenAPI
+
+Rules for generating OpenAPI schemas from project models and relations.
+
+## Purpose
+
+Define how Cursor should construct OpenAPI 3.1-compliant schemas using the JSON model definitions in schemas/models/ and relation definitions in schemas/relations/.
+
+## Rules
+
+- Base all OpenAPI components on the JSON Schemas under schemas/models/.
+- Convert JSON Schema types to OpenAPI formats where applicable.
+- Generate request/response schemas using Pydantic/Laravel DTO conventions.
+- Relations should be represented as nested objects or $ref links.
+- Required fields in models must map to OpenAPI required arrays.
+- Enums should produce OpenAPI enum definitions.
+- Arrays must include an items schema.
+- Use component references: #/components/schemas/ModelName.
+- Avoid generating circular references.

@@ -1,0 +1,28 @@
+flowchart TB
+    P["📦 Project: Car Market Monitor"]
+    P --> M_milestone-domain
+    M_milestone-domain["🚩 Milestone: Domain & DDD"]
+
+    M_milestone-domain --> I_issue-domain-model
+    I_issue-domain-model["🔹 Issue: Design Domain Model"]
+
+    I_issue-domain-model --> T_task-ddd
+    T_task-ddd["📝 Task: Generate DDD model (type: ddd)"]
+
+    T_task-ddd --> S_sub-agg-carlisting["☑️ Generate CarListing aggregate"]
+    T_task-ddd --> S_sub-vo-money["☑️ Generate Money value object"]
+
+    P --> M_milestone-mvc
+    M_milestone-mvc["🚩 Milestone: MVC Layer"]
+
+    M_milestone-mvc --> I_issue-mvc-listings
+    I_issue-mvc-listings["🔹 Issue: MVC for Listings"]
+
+    I_issue-mvc-listings --> T_task-mvc-models
+    T_task-mvc-models["📝 Task: MVC Models (type: mvc-model)"]
+
+    I_issue-mvc-listings --> T_task-mvc-controllers
+    T_task-mvc-controllers["📝 Task: MVC Controllers (type: mvc-controller)"]
+
+    I_issue-mvc-listings --> T_task-mvc-views
+    T_task-mvc-views["📝 Task: MVC Views (type: mvc-view)"]

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "mvc": {
+    "enforce_separation_of_concerns": true,
+    "require_crud_operations": true,
+    "validate_model_structure": true,
+    "validate_controller_structure": true,
+    "validate_view_structure": true,
+    "stack_specific": {
+      "laravel": {
+        "model_extends_eloquent": true,
+        "controller_extends_base": true,
+        "views_use_blade": true
+      },
+      "express": {
+        "model_uses_typescript": true,
+        "controller_uses_typescript": true,
+        "views_use_template_engine": true
+      },
+      "fastapi": {
+        "model_uses_pydantic": true,
+        "controller_uses_apirouter": true,
+        "views_use_jinja2": true
+      }
+    }
+  }
+}
+

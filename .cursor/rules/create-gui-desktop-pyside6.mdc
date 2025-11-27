@@ -1,0 +1,84 @@
+# PySide6 Desktop GUI Rules
+
+## Purpose
+Generate a desktop GUI application using **PySide6 (Qt for Python)**.
+
+## Output Structure
+The agent must generate:
+
+```
+gui/
+desktop/
+pyside6/
+main.py
+app.py
+ui/
+init.py
+main_window.py
+components/
+services/
+```
+
+## Requirements
+- Must use PySide6 widgets (QMainWindow, QWidget, QTreeView, QTextEdit, etc.).
+- Must auto-generate a **MainWindow** with:
+  - Sidebar navigation
+  - Central content view
+  - Status bar
+  - Signals/slots wiring
+- Must generate a `services/` folder for:
+  - Plan viewer
+  - Agent runner
+  - Mermaid preview (via WebView)
+- Must include a working event loop and test run example.
+
+## Style Rules
+- Use Qt Designer-friendly structure.
+- UI must follow modern dark/light theme.
+- Use asynchronous worker thread for long tasks.
+- No blocking calls in UI thread.
+
+## Integration
+- Must integrate with Plan → Wizard → Parallel Executor workflows.
+- Must expose functions to:
+  - Load plan
+  - Display tasks
+  - Display DAG / Mermaid diagrams
+  - Run plan (parallel)
+  - Show logs
+
+## SSL Manager View
+
+The PySide6 app MUST include an "SSL Manager" dock/widget:
+
+- Shows:
+  - current domain
+  - certificate validity
+  - expiry countdown
+- Buttons:
+  - "Enable SSL"
+  - "Renew Certificates"
+  - "Reload Nginx"
+- A text area or table to show:
+  - last certbot logs
+  - last renewal results
+
+Optionally, embed a WebView for Mermaid diagram showing SSL flow.
+
+The agent should generate a `SslManagerWidget` (or similar) under `ui/` or `components/`.
+
+## Nginx SSL Config Editor
+
+The PySide6 app MUST include a menu item: **Tools → Nginx SSL Config**
+
+This opens a new QDialog with:
+
+- QTextEdit or QPlainTextEdit for config editing
+- Buttons: "Load", "Save & Test", "Save & Reload"
+- API endpoints:
+  - GET /api/ssl/nginx-config
+  - POST /api/ssl/nginx-config
+
+You can later replace the text editor with an embedded Monaco/CodeMirror via Qt WebEngine if you want syntax highlighting.
+
+The agent should generate a `NginxConfigEditorDialog` under `ui/` or `components/`.

@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "tdd": {
+    "require_failing_test_first": true,
+    "enforce_red_green_refactor": true,
+    "validate_test_naming": true,
+    "disallow_skipped_tests": true,
+    "auto_stub_dependencies": true
+  },
+  "mvc-controller": {
+    "tests": [
+      "test_index_returns_list",
+      "test_show_returns_item",
+      "test_create_adds_item",
+      "test_update_modifies_item",
+      "test_delete_removes_item"
+    ]
+  }
+}
+

@@ -1,0 +1,11 @@
+flowchart LR
+
+    subgraph Dispatcher["⚙️ Task Type Dispatch Engine"]
+    direction TB
+    A["Receive Task"] --> B["Inspect task.type"]
+    end
+
+    %% Agent mappings from rules
+    {{#taskTypes}}
+    B --> {{sanitizedType}}["{{type}} → {{agent}}"]
+    {{/taskTypes}}

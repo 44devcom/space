@@ -1,0 +1,50 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "EventSchema",
+    "description": "Schema describing a domain event definition for code generation.",
+    "type": "object",
+  
+    "properties": {
+      "name": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Za-z0-9]+$",
+        "description": "Event name in PascalCase (e.g. UserRegistered)."
+      },
+  
+      "feature": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$",
+        "description": "Feature folder; also determines <feature>_events.py and <feature>_handlers.py output files."
+      },
+  
+      "description": {
+        "type": "string"
+      },
+  
+      "payload": {
+        "type": "object",
+        "description": "Typed payload fields for the event.",
+        "additionalProperties": {
+          "type": "string",
+          "enum": ["string", "integer", "number", "boolean", "object", "array"]
+        }
+      },
+  
+      "broadcast": {
+        "type": "boolean",
+        "default": false
+      },
+  
+      "stacks": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["python-fastapi", "laravel", "node-express", "sql"]
+        },
+        "default": ["python-fastapi"]
+      }
+    },
+  
+    "required": ["name", "feature", "payload"]
+  }
+  

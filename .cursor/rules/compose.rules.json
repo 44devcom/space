@@ -1,0 +1,16 @@
+{
+    "version": 1,
+    "compose": {
+    "require_healthcheck": true,
+    "require_restart_policy": true,
+    "forbid_container_name": false,
+    "forbid_bind_mounts": false,
+    "require_cpu_limits": false,
+    "require_memory_limits": false,
+    "validate_structure": true,
+    "schema": {
+    "services_required": true,
+    "allow_extends": true
+    }
+    }
+    }

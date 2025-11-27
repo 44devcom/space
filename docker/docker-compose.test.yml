@@ -1,0 +1,87 @@
+# Test environment configuration
+services:
+  db-test:
+    image: mysql:8.0
+    container_name: car-market-db-test
+    environment:
+      MYSQL_ROOT_PASSWORD: test_secret
+      MYSQL_DATABASE: cars_test
+    ports:
+      - "3307:3306"
+    networks:
+      - car-market-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  queue-test:
+    image: redis:7-alpine
+    container_name: car-market-queue-test
+    ports:
+      - "6381:6379"
+    networks:
+      - car-market-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  docker-test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: base
+    container_name: car-market-docker-test
+    environment:
+      DB_HOST: db-test
+      DB_PORT: 3306
+      DB_DATABASE: cars_test
+      DB_USERNAME: root
+      DB_PASSWORD: test_secret
+      REDIS_HOST: queue-test
+      REDIS_PORT: 6379
+      APP_ENV: testing
+    depends_on:
+      db-test:
+        condition: service_healthy
+      queue-test:
+        condition: service_healthy
+    networks:
+      - car-market-network
+    volumes:
+      - ../src:/app/src
+      - ../tests:/app/tests
+    command: ["pytest", "tests/", "-v"]
+
+  ui-tests-playwright:
+    build:
+      context: ..
+      dockerfile: docker/ui/playwright/Dockerfile
+    container_name: car-market-ui-tests
+    environment:
+      BASE_URL: http://nextjs:3000
+      API_URL: http://api:8000
+      CI: "1"
+    depends_on:
+      api:
+        condition: service_healthy
+      nextjs:
+        condition: service_healthy
+    networks:
+      - car-market-network
+    volumes:
+      - ../tests/ui:/app/tests/ui:ro
+      - playwright-report:/app/playwright-report
+    command: ["npx", "playwright", "test", "--project=chromium"]
+
+networks:
+  car-market-network:
+    name: docker_car-market-network
+    external: true
+
+volumes:
+  playwright-report:
+

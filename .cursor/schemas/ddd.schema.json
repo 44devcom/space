@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DDD Input Schema",
+  "type": "object",
+  "properties": {
+    "domain": { "type": "string" },
+    "aggregateRoots": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["domain"]
+}
+

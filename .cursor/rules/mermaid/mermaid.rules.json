@@ -1,0 +1,45 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Mermaid Diagram Rules",
+    "description": "Rules for generating Mermaid diagrams for project plans and agent dispatch.",
+    "type": "object",
+  
+    "properties": {
+      "projectHierarchy": {
+        "description": "Rules for visualizing Project → Milestones → Issues → Tasks → Subtasks",
+        "type": "object",
+        "properties": {
+          "diagramType": { "type": "string", "enum": ["flowchart", "mindmap", "graph"] },
+          "direction": { "type": "string", "enum": ["TB", "LR", "BT", "RL"] },
+          "nodeStyles": {
+            "type": "object",
+            "properties": {
+              "project": { "type": "string" },
+              "milestone": { "type": "string" },
+              "issue": { "type": "string" },
+              "task": { "type": "string" },
+              "subtask": { "type": "string" }
+            }
+          },
+          "showSubtasks": { "type": "boolean" }
+        }
+      },
+  
+      "taskDispatch": {
+        "description": "Rules for visualizing task.type → agent dispatch flow",
+        "type": "object",
+        "properties": {
+          "diagramType": { "type": "string", "enum": ["flowchart", "graph"] },
+          "direction": { "type": "string", "enum": ["TB", "LR"] },
+          "includeCustomTypes": { "type": "boolean" },
+          "agentMap": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      }
+    },
+  
+    "required": ["projectHierarchy", "taskDispatch"]
+  }
+  

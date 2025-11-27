@@ -1,0 +1,10 @@
+---
+globs: *.php
+alwaysApply: false
+---
+Rules for PHP code generation.
+- Use PSR-12 coding standard.
+- Classes in PascalCase, methods in camelCase.
+- Use type hints and return types.
+- Prefer dependency injection.
+- Avoid global state.

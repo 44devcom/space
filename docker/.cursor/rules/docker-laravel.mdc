@@ -1,0 +1,39 @@
+---
+alwaysApply: true
+---
+# Laravel Docker Service
+
+## Image
+- Uses official `php:8.3-fpm-alpine`
+- Includes:
+  - Composer
+  - PDO MySQL
+  - Redis extension
+  - Opcache
+  - Nginx-compatible PHP settings
+
+## Build Steps
+1. Install system dependencies (`bash`, `git`, `libzip`)
+2. Install PHP extensions (`zip`, `pdo_mysql`)
+3. Install Composer
+4. Copy application source
+5. Set correct permissions for Laravel storage
+6. Enable Opcache for production
+
+## Runtime
+- Exposes port 9000
+- Works behind Nginx/Traefik
+- Uses production `.env` mounted as secret
+
+## Volumes
+- `/var/www/html/storage`
+- `/var/www/html/bootstrap/cache`
+
+## Recommended Command
+```bash
+docker compose exec laravel php artisan config:cache
+docker compose exec laravel php artisan migrate --force
+```
+
+## Healthcheck
+- `php-fpm` ping endpoint enabled at `/ping`

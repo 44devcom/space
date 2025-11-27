@@ -1,0 +1,36 @@
+---
+alwaysApply: true
+---
+# FastAPI Docker Service
+
+## Image
+- `python:3.12-slim`
+
+## Production Stack
+- `uvicorn` workers via `gunicorn`
+- `--worker-class uvicorn.workers.UvicornWorker`
+- Auto-reload disabled (prod mode)
+
+## Directory Structure
+- `/app`
+  - `main.py`
+  - `requirements.txt`
+
+## Build Steps
+1. Install system libs
+2. Install Python dependencies (cached for efficiency)
+3. Copy application
+4. Run migrations (if using SQLAlchemy/Alembic)
+
+## Startup Command
+```bash
+gunicorn main:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 --workers 4
+```
+
+## Healthcheck
+```bash
+curl -f http://localhost:8000/health
+```
+
+## Notes
+- Recommended that Nginx reverse proxies this container.

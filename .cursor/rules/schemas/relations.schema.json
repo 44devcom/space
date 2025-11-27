@@ -1,0 +1,127 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "RelationsSchema",
+    "description": "Schema for defining ORM-style relations between data models.",
+    "type": "object",
+  
+    "properties": {
+      "relations": {
+        "type": "array",
+        "description": "A list of relation definitions between models.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Optional name for the relation."
+            },
+  
+            "type": {
+              "type": "string",
+              "enum": [
+                "one-to-one",
+                "one-to-many",
+                "many-to-one",
+                "many-to-many",
+                "polymorphic",
+                "self"
+              ],
+              "description": "The relation type."
+            },
+  
+            "from": {
+              "type": "string",
+              "description": "The originating model name (child for many-to-one, parent for one-to-many)."
+            },
+  
+            "to": {
+              "type": "string",
+              "description": "The target model name."
+            },
+  
+            "localField": {
+              "type": "string",
+              "description": "The field on the 'from' model that stores the foreign key."
+            },
+  
+            "foreignField": {
+              "type": "string",
+              "description": "The field on the 'to' model that is referenced (usually primary key)."
+            },
+  
+            "through": {
+              "type": "string",
+              "description": "For many-to-many: name of the join/pivot table model."
+            },
+  
+            "fromField": {
+              "type": "string",
+              "description": "For many-to-many: FK field in pivot referencing 'from'."
+            },
+  
+            "toField": {
+              "type": "string",
+              "description": "For many-to-many: FK field in pivot referencing 'to'."
+            },
+  
+            "onDelete": {
+              "type": "string",
+              "enum": ["CASCADE", "RESTRICT", "SET NULL", "NO ACTION"],
+              "description": "SQL delete behavior."
+            },
+  
+            "onUpdate": {
+              "type": "string",
+              "enum": ["CASCADE", "RESTRICT", "SET NULL", "NO ACTION"],
+              "description": "SQL update behavior."
+            },
+  
+            "unique": {
+              "type": "boolean",
+              "description": "Indicates a unique relationship (applies mostly to one-to-one)."
+            },
+  
+            "polymorphicTypes": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "For polymorphic relations: list of possible target models."
+            },
+  
+            "typeField": {
+              "type": "string",
+              "description": "For polymorphic relations: the discriminator field name."
+            },
+  
+            "idField": {
+              "type": "string",
+              "description": "For polymorphic relations: field holding the referenced ID."
+            }
+          },
+  
+          "required": ["type", "from", "to"],
+  
+          "allOf": [
+            {
+              "if": {
+                "properties": { "type": { "const": "many-to-many" } }
+              },
+              "then": {
+                "required": ["through", "fromField", "toField"]
+              }
+            },
+            {
+              "if": {
+                "properties": { "type": { "const": "polymorphic" } }
+              },
+              "then": {
+                "required": ["typeField", "idField", "polymorphicTypes"]
+              }
+            }
+          ]
+        }
+      }
+    },
+  
+    "required": ["relations"]
+  }
+  

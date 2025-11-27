@@ -1,0 +1,32 @@
+---
+alwaysApply: true
+---
+# MySQL Docker Service (Production Configuration)
+
+## Image
+- Official: `mysql:8.0`
+
+## Configuration
+- UTF8MB4 enabled by default
+- Slow query log enabled
+- Strict SQL mode
+- Lower memory footprint for production
+
+## Environment Variables
+- `MYSQL_DATABASE`
+- `MYSQL_USER`
+- `MYSQL_PASSWORD`
+- `MYSQL_ROOT_PASSWORD`
+
+## Volumes
+- `/var/lib/mysql` — persistent data
+
+## Backup Recommendation
+```bash
+docker exec mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" $MYSQL_DATABASE' > backup.sql
+```
+
+## Healthcheck
+```bash
+mysqladmin ping -uroot -p$MYSQL_ROOT_PASSWORD
+```

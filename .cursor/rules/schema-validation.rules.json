@@ -1,0 +1,30 @@
+{
+    "version": 1,
+    "schema_validation": {
+    "openapi": {
+    "strict": true,
+    "fail_on_missing_response_schema": true,
+    "fail_on_missing_request_schema": true,
+    "validate_all_endpoints": true,
+    "require_tags": false,
+    "require_description": false
+    },
+    "json": {
+    "strict": true,
+    "fail_on_additional_properties": false,
+    "fail_on_missing_required": true,
+    "validate_arrays": true,
+    "validate_number_types": true
+    },
+    "database_schema": {
+    "check_foreign_keys": true,
+    "check_indices": true,
+    "check_nullable_rules": true,
+    "check_column_types": true
+    },
+    "redis_schema": {
+    "require_ping": true,
+    "require_memory_policy": true
+    }
+    }
+    }

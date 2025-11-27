@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "ddd": {
+    "require_value_objects": true,
+    "require_aggregates": true,
+    "require_domain_events": true,
+    "require_repository_interfaces": true,
+    "disallow_business_logic_in_controllers": true,
+    "enforce_ubiquitous_language": true,
+    "validate_entities_have_identity": true
+  }
+}
+

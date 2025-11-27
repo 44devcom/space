@@ -1,0 +1,78 @@
+# Kotlin Mobile GUI (Android) Rules
+
+## Purpose
+Generate a native Android app in **Kotlin** using **Jetpack Compose**.
+
+## Output Structure
+
+```
+gui/
+mobile/
+android/
+app/
+src/
+main/
+java/
+<package>/MainActivity.kt
+res/
+layout/
+values/
+```
+
+## Requirements
+- Use **Jetpack Compose UI**.
+- Generate:
+  - MainActivity with navigation scaffold
+  - Screens for:
+    - Plan list
+    - Task view
+    - Parallel execution visualization
+    - Log viewer
+    - SSL & Certificates
+  - ViewModel layer using Kotlin + coroutines
+- Must support:
+  - Live updates from backend
+  - Dark/light themes
+  - Loading animations
+  - Modular structure
+
+## SSL & Certificates Screen
+
+The Android app MUST include a "SSL & Certificates" screen that:
+
+- Shows:
+  - domain
+  - certificate issuer
+  - valid from / valid to
+  - days remaining
+- Has buttons:
+  - "Enable SSL"
+  - "Renew"
+  - "Reload Nginx"
+- Uses Retrofit to call:
+  - GET /api/ssl/status
+  - POST /api/ssl/enable
+  - POST /api/ssl/renew
+  - POST /api/ssl/reload-nginx
+
+Errors and results must be shown in a snack bar or log list.
+
+## Integration
+- Communicates with backend using:
+  - Retrofit (REST)
+  - Optional WebSocket for live task updates
+- Must support:
+  - Running plan remotely
+  - Displaying milestones, issues, tasks
+  - Rendering Mermaid to WebView if needed
+- Code must be clean, idiomatic Kotlin.
+
+### SSL API Endpoints
+
+The mobile app must integrate with:
+- GET /api/ssl/status - Get SSL certificate status
+- POST /api/ssl/enable - Run initial certificate request
+- POST /api/ssl/renew - Renew certificates
+- POST /api/ssl/reload-nginx - Reload Nginx configuration
+- GET /api/ssl/nginx-config - Fetch Nginx SSL config (optional for mobile)
+- POST /api/ssl/nginx-config - Save Nginx SSL config (optional for mobile)

@@ -1,0 +1,131 @@
+---
+alwaysApply: true
+---
+# Documentation Rules — .cursor/documents/
+
+These rules instruct Cursor and Cursor Agents to automatically read all relevant documentation stored inside: 
+```
+.cursor/documents/
+```
+before performing any task, transformation, or generation.
+
+## 1. Always Read Relevant Documentation
+
+Before any operation, Cursor must:
+
+1. Inspect all files under `.cursor/documents/`.
+2. Identify documents related to the current task.
+3. Load those documents into context automatically.
+
+Relevant means:
+- The document name matches the task domain  
+  (e.g., `laravel.md`, `python.md`, `orm.md`, `crud.md`)
+- OR the document contains keywords matching the user query.
+
+---
+
+## 2. Documentation Priority
+
+When multiple documents could apply:
+
+1. **Most specific filename wins.**
+2. Next, match by content keywords.
+3. If still ambiguous, load:
+   - `architecture.md`
+   - `overview.md`
+   - `standards.md`
+
+These act as fallback defaults.
+
+---
+
+## 3. Agent Behavior
+
+Agents MUST:
+
+- Load relevant `.cursor/documents/*` files before planning.
+- Integrate those rules into the plan.
+- Explain which documents were consulted (optional).
+- Never ignore a matching document.
+
+---
+
+## 4. Pattern Matching Rules
+
+A document is considered relevant if:
+
+- Filename contains a domain keyword  
+  (example: `laravel-controller.md` matches “controller”, “laravel”)
+- Title or header mentions topic
+- Keywords in the file match user request:
+  - “orm”, “eloquent”, “model”
+  - “python”, “fastapi”, “sqlalchemy”
+  - “node”, “express”, “router”
+  - etc.
+
+---
+
+## 5. Execution Rules
+
+When generating or modifying code:
+
+- Follow all rules defined in matched documents.
+- Project-specific documentation **overrides** generic rules.
+- If documentation contradicts:
+  - Specific → general  
+  - Latest updated file → older files
+
+---
+
+## 6. Examples
+
+### When generating Laravel code:
+Load automatically:
+```
+.cursor/documents/laravel.md
+.cursor/documents/php.md
+```
+
+### When generating Python/FastAPI:
+Load:
+```
+.cursor/documents/python.md
+.cursor/documents/fastapi.md
+```
+
+### When generating ORM models:
+Load:
+```
+.cursor/documents/orm.md
+.cursor/documents/database.md
+```
+
+### When building CRUD:
+Load:
+```
+.cursor/documents/crud.md
+.cursor/documents/api.md
+```
+
+---
+
+## 7. Non-Intrusive Behavior
+
+If no matching documentation is found:
+
+- Cursor continues normally.
+- No warnings or errors.
+- The behavior is safe and fallback-driven.
+
+---
+
+## 8. Developer Notes
+
+These rules ensure:
+
+- Consistent architecture
+- Adherence to project conventions
+- Predictable output across ecosystems
+- No need to re-explain your standards to Cursor
+
+This turns your `.cursor/documents/` directory into a **source of truth** for project-wide rules.

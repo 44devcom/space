@@ -1,0 +1,107 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ModelSchema",
+    "description": "Schema for defining model structures (fields only, no relations).",
+    "type": "object",
+  
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "The name of the model. Must match the model filename."
+      },
+  
+      "type": {
+        "type": "string",
+        "enum": ["object"],
+        "description": "Model definitions must always be objects."
+      },
+  
+      "description": {
+        "type": "string",
+        "description": "Optional description of the model."
+      },
+  
+      "properties": {
+        "type": "object",
+        "description": "Field definitions of the model.",
+        "additionalProperties": {
+          "type": "object",
+          "description": "A field definition.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "string",
+                "number",
+                "integer",
+                "boolean",
+                "object",
+                "array"
+              ],
+              "description": "The JSON type of the field."
+            },
+  
+            "format": {
+              "type": "string",
+              "description": "Optional format (email, uuid, date-time, etc.)."
+            },
+  
+            "description": {
+              "type": "string"
+            },
+  
+            "default": {
+              "description": "Optional default value."
+            },
+  
+            "enum": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Allowed values if the field is an enum."
+            },
+  
+            "items": {
+              "type": "object",
+              "description": "Schema for array items (if type == array)."
+            },
+  
+            "x-primary-key": {
+              "type": "boolean",
+              "description": "Optional extension to mark primary key."
+            },
+  
+            "x-auto-increment": {
+              "type": "boolean",
+              "description": "Optional: auto-increment annotation for SQL."
+            },
+  
+            "x-unique": {
+              "type": "boolean",
+              "description": "Optional: mark a field as unique."
+            },
+  
+            "x-index": {
+              "type": "boolean",
+              "description": "Optional: mark field for indexing."
+            },
+  
+            "x-metadata": {
+              "type": "object",
+              "description": "Optional custom extensions for your generators."
+            }
+          },
+  
+          "required": ["type"]
+        }
+      },
+  
+      "required": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "List of required field names."
+      }
+    },
+  
+    "required": ["title", "type", "properties"]
+  }
+  

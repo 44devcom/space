@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Deploy Orchestration Rules",
+    "type": "object",
+    "environments": {
+      "production-git": {
+        "method": "git",
+        "rulesFile": ".cursor/rules/deploy/git-deploy.rules.json",
+        "description": "Production deployment via Git"
+      },
+      "production-ssh": {
+        "method": "ssh",
+        "rulesFile": ".cursor/rules/deploy/ssh-deploy.rules.json",
+        "description": "Production deployment via SSH/rsync"
+      },
+      "staging": {
+        "method": "git",
+        "rulesFile": ".cursor/rules/deploy/git-deploy.rules.json",
+        "description": "Staging deployment via Git"
+      }
+    },
+    "defaults": {
+      "environment": "production-git"
+    }
+  }
+  

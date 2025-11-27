@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GraphQL Schema Generation Input",
+  "type": "object",
+  "properties": {
+    "domain": { "type": "string" },
+    "entities": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["domain"]
+}
+
