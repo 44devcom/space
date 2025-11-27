@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cloudflare Domain Service Configuration",
+  "description": "Schema for Cloudflare domain service management and configuration",
+  "type": "object",
+  "properties": {
+    "service_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "description": "Unique service identifier"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Service name"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Service description"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Service version (semantic versioning)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "inactive", "maintenance", "deprecated"],
+      "description": "Service status"
+    },
+    "cloudflare_config": {
+      "type": "object",
+      "properties": {
+        "api_token": {
+          "type": "string",
+          "minLength": 40,
+          "description": "Cloudflare API token (sensitive)"
+        },
+        "api_email": {
+          "type": "string",
+          "format": "email",
+          "description": "Cloudflare account email"
+        },
+        "api_key": {
+          "type": "string",
+          "minLength": 40,
+          "description": "Cloudflare API key (sensitive)"
+        },
+        "base_url": {
+          "type": "string",
+          "enum": ["https://api.cloudflare.com/client/v4"],
+          "description": "Cloudflare API base URL"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 30000,
+          "default": 10000,
+          "description": "API request timeout in milliseconds"
+        },
+        "retry_attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "default": 3,
+          "description": "Number of retry attempts for failed requests"
+        }
+      },
+      "required": ["base_url"],
+      "additionalProperties": false
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "dns_management": {
+          "type": "boolean",
+          "description": "Enable DNS record management"
+        },
+        "ssl_management": {
+          "type": "boolean",
+          "description": "Enable SSL/TLS certificate management"
+        },
+        "cache_management": {
+          "type": "boolean",
+          "description": "Enable cache management"
+        },
+        "firewall_rules": {
+          "type": "boolean",
+          "description": "Enable firewall rules management"
+        },
+        "page_rules": {
+          "type": "boolean",
+          "description": "Enable page rules management"
+        },
+        "analytics": {
+          "type": "boolean",
+          "description": "Enable analytics collection"
+        },
+        "auto_ssl": {
+          "type": "boolean",
+          "description": "Enable automatic SSL certificate provisioning"
+        }
+      },
+      "additionalProperties": false
+    },
+    "monitoring": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable monitoring"
+        },
+        "health_check_interval": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 3600,
+          "default": 300,
+          "description": "Health check interval in seconds"
+        },
+        "alert_webhooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Webhook URL"
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["domain_added", "domain_removed", "ssl_expired", "dns_changed", "service_down"]
+                },
+                "description": "Events to send to this webhook"
+              }
+            },
+            "required": ["url", "events"],
+            "additionalProperties": false
+          },
+          "description": "Alert webhook configurations"
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "retention_days": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 30,
+              "description": "Metrics retention period in days"
+            },
+            "collection_interval": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 3600,
+              "default": 300,
+              "description": "Metrics collection interval in seconds"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\\.[a-zA-Z]{2,}$"
+          },
+          "zone_id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{32}$"
+          },
+          "auto_configure": {
+            "type": "boolean",
+            "description": "Automatically configure domain settings"
+          }
+        },
+        "required": ["domain"],
+        "additionalProperties": false
+      },
+      "description": "List of managed domains"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Service creation timestamp"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created the service"
+    }
+  },
+  "required": ["service_id", "name", "version", "status", "cloudflare_config"],
+  "additionalProperties": false
+}

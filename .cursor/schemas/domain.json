@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cloudflare Domain Configuration",
+  "description": "Schema for managing domains through Cloudflare",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\\.[a-zA-Z]{2,}$",
+      "description": "The domain name (e.g., example.com)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "pending", "moved", "deleted", "deactivated"],
+      "description": "Current status of the domain"
+    },
+    "name_servers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9.-]+\\.cloudflare\\.com$"
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "Cloudflare name servers for the domain"
+    },
+    "zone_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$",
+      "description": "Cloudflare zone ID for the domain"
+    },
+    "account_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$",
+      "description": "Cloudflare account ID"
+    },
+    "plan": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": ["free", "pro", "business", "enterprise"],
+          "description": "Cloudflare plan type"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable plan name"
+        },
+        "price": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Monthly price in USD"
+        }
+      },
+      "required": ["id", "name"],
+      "additionalProperties": false
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "development_mode": {
+          "type": "boolean",
+          "description": "Development mode status"
+        },
+        "ssl": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["off", "flexible", "full", "strict"],
+              "description": "SSL/TLS encryption mode"
+            },
+            "certificate_authority": {
+              "type": "string",
+              "enum": ["lets_encrypt", "digicert", "google_trust_services"],
+              "description": "Certificate authority"
+            }
+          },
+          "required": ["status"],
+          "additionalProperties": false
+        },
+        "cache_level": {
+          "type": "string",
+          "enum": ["aggressive", "basic", "simplified"],
+          "description": "Caching level"
+        },
+        "browser_cache_ttl": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31536000,
+          "description": "Browser cache TTL in seconds"
+        },
+        "always_use_https": {
+          "type": "boolean",
+          "description": "Force HTTPS redirect"
+        },
+        "minify": {
+          "type": "object",
+          "properties": {
+            "css": {"type": "boolean"},
+            "html": {"type": "boolean"},
+            "js": {"type": "boolean"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "dns_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/dns_record"
+      },
+      "description": "DNS records for the domain"
+    },
+    "created_on": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Domain creation timestamp"
+    },
+    "modified_on": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last modification timestamp"
+    }
+  },
+  "required": ["domain", "status", "zone_id", "account_id"],
+  "additionalProperties": false,
+  "definitions": {
+    "dns_record": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$",
+          "description": "DNS record ID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV", "CAA"],
+          "description": "DNS record type"
+        },
+        "name": {
+          "type": "string",
+          "description": "Record name (subdomain or @ for root)"
+        },
+        "content": {
+          "type": "string",
+          "description": "Record content/value"
+        },
+        "ttl": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "description": "Time to live in seconds"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "Priority for MX and SRV records"
+        },
+        "proxied": {
+          "type": "boolean",
+          "description": "Whether record is proxied through Cloudflare"
+        },
+        "comment": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Optional comment for the record"
+        }
+      },
+      "required": ["type", "name", "content"],
+      "additionalProperties": false
+    }
+  }
+}

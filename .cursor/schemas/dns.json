@@ -1,0 +1,214 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cloudflare DNS Records Management",
+  "description": "Schema for managing DNS records through Cloudflare",
+  "type": "object",
+  "properties": {
+    "zone_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$",
+      "description": "Cloudflare zone ID"
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\\.[a-zA-Z]{2,}$",
+      "description": "Domain name"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/dns_record"
+      },
+      "description": "DNS records for the domain"
+    },
+    "bulk_operations": {
+      "type": "object",
+      "properties": {
+        "batch_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 10,
+          "description": "Number of records to process in each batch"
+        },
+        "delay_between_batches": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "default": 1000,
+          "description": "Delay between batch operations in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "check_conflicts": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check for conflicting records before creation"
+        },
+        "validate_ttl": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate TTL values"
+        },
+        "check_duplicates": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check for duplicate records"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["zone_id", "domain"],
+  "additionalProperties": false,
+  "definitions": {
+    "dns_record": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$",
+          "description": "DNS record ID (auto-generated for new records)"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV", "CAA", "PTR", "LOC", "HINFO", "CERT", "DNAME", "DS", "NAPTR", "SSHFP", "TLSA", "URI"],
+          "description": "DNS record type"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Record name (subdomain or @ for root domain)"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Record content/value"
+        },
+        "ttl": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 1,
+          "description": "Time to live in seconds (1 = auto)"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "Priority for MX and SRV records"
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "Weight for SRV records"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Port for SRV records"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target hostname for SRV records"
+        },
+        "proxied": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether record is proxied through Cloudflare"
+        },
+        "comment": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Optional comment for the record"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "maxItems": 10,
+          "description": "Tags for categorizing records"
+        },
+        "created_on": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Record creation timestamp"
+        },
+        "modified_on": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification timestamp"
+        }
+      },
+      "required": ["type", "name", "content"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": ["MX", "SRV"]
+              }
+            }
+          },
+          "then": {
+            "required": ["priority"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": ["SRV"]
+              }
+            }
+          },
+          "then": {
+            "required": ["weight", "port", "target"]
+          }
+        }
+      ]
+    },
+    "dns_bulk_operation": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": ["create", "update", "delete", "upsert"],
+          "description": "Bulk operation type"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dns_record"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "description": "Records to process"
+        },
+        "dry_run": {
+          "type": "boolean",
+          "default": false,
+          "description": "Validate operation without executing"
+        },
+        "continue_on_error": {
+          "type": "boolean",
+          "default": false,
+          "description": "Continue processing if individual records fail"
+        }
+      },
+      "required": ["operation", "records"],
+      "additionalProperties": false
+    }
+  }
+}

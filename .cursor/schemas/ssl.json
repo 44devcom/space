@@ -1,0 +1,338 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cloudflare SSL/TLS Configuration",
+  "description": "Schema for managing SSL/TLS certificates and settings through Cloudflare",
+  "type": "object",
+  "properties": {
+    "zone_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$",
+      "description": "Cloudflare zone ID"
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\\.[a-zA-Z]{2,}$",
+      "description": "Domain name"
+    },
+    "ssl_settings": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["off", "flexible", "full", "strict"],
+          "description": "SSL/TLS encryption mode"
+        },
+        "certificate_authority": {
+          "type": "string",
+          "enum": ["lets_encrypt", "digicert", "google_trust_services", "custom"],
+          "description": "Certificate authority"
+        },
+        "edge_certificates": {
+          "type": "object",
+          "properties": {
+            "tiered_certificate_authority": {
+              "type": "string",
+              "enum": ["digicert", "google_trust_services"],
+              "description": "Tiered certificate authority"
+            },
+            "universal_ssl_enabled": {
+              "type": "boolean",
+              "description": "Enable Universal SSL"
+            },
+            "dedicated_certificate": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable dedicated certificate"
+                },
+                "certificate_id": {
+                  "type": "string",
+                  "description": "Dedicated certificate ID"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "always_use_https": {
+          "type": "boolean",
+          "description": "Force HTTPS redirect"
+        },
+        "hsts": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable HTTP Strict Transport Security"
+            },
+            "max_age": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 31536000,
+              "default": 15552000,
+              "description": "HSTS max-age in seconds"
+            },
+            "include_subdomains": {
+              "type": "boolean",
+              "description": "Include subdomains in HSTS"
+            },
+            "preload": {
+              "type": "boolean",
+              "description": "Enable HSTS preload"
+            }
+          },
+          "additionalProperties": false
+        },
+        "tls_versions": {
+          "type": "object",
+          "properties": {
+            "tls_1_0": {
+              "type": "boolean",
+              "description": "Enable TLS 1.0"
+            },
+            "tls_1_1": {
+              "type": "boolean",
+              "description": "Enable TLS 1.1"
+            },
+            "tls_1_2": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable TLS 1.2"
+            },
+            "tls_1_3": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable TLS 1.3"
+            }
+          },
+          "additionalProperties": false
+        },
+        "cipher_suites": {
+          "type": "object",
+          "properties": {
+            "preference": {
+              "type": "string",
+              "enum": ["modern", "intermediate", "old"],
+              "default": "modern",
+              "description": "Cipher suite preference"
+            },
+            "custom_ciphers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["ECDHE-RSA-AES128-GCM-SHA256", "ECDHE-RSA-AES256-GCM-SHA384", "ECDHE-RSA-AES128-SHA256", "ECDHE-RSA-AES256-SHA384"]
+              },
+              "description": "Custom cipher suites"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["status"],
+      "additionalProperties": false
+    },
+    "certificates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/certificate"
+      },
+      "description": "SSL certificates for the domain"
+    },
+    "custom_certificates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/custom_certificate"
+      },
+      "description": "Custom SSL certificates"
+    },
+    "page_rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ssl_page_rule"
+      },
+      "description": "SSL-specific page rules"
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "check_certificate_validity": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate certificate before deployment"
+        },
+        "check_chain_completeness": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check certificate chain completeness"
+        },
+        "verify_domain_control": {
+          "type": "boolean",
+          "default": true,
+          "description": "Verify domain control before certificate issuance"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["zone_id", "domain", "ssl_settings"],
+  "additionalProperties": false,
+  "definitions": {
+    "certificate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$",
+          "description": "Certificate ID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["universal", "dedicated", "custom"],
+          "description": "Certificate type"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "pending", "expired", "failed", "deleted"],
+          "description": "Certificate status"
+        },
+        "issuer": {
+          "type": "string",
+          "description": "Certificate issuer"
+        },
+        "serial_number": {
+          "type": "string",
+          "description": "Certificate serial number"
+        },
+        "signature_algorithm": {
+          "type": "string",
+          "description": "Signature algorithm"
+        },
+        "key_algorithm": {
+          "type": "string",
+          "description": "Key algorithm"
+        },
+        "key_size": {
+          "type": "integer",
+          "description": "Key size in bits"
+        },
+        "valid_from": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Certificate valid from date"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Certificate valid until date"
+        },
+        "days_until_expiry": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Days until certificate expires"
+        },
+        "hostnames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Hostnames covered by this certificate"
+        },
+        "auto_renew": {
+          "type": "boolean",
+          "description": "Auto-renew certificate"
+        }
+      },
+      "required": ["id", "type", "status"],
+      "additionalProperties": false
+    },
+    "custom_certificate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$",
+          "description": "Custom certificate ID"
+        },
+        "certificate": {
+          "type": "string",
+          "description": "PEM-encoded certificate"
+        },
+        "private_key": {
+          "type": "string",
+          "description": "PEM-encoded private key"
+        },
+        "bundle_method": {
+          "type": "string",
+          "enum": ["ubiquitous", "optimal", "force"],
+          "default": "ubiquitous",
+          "description": "Certificate bundle method"
+        },
+        "geo_restrictions": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string",
+              "enum": ["us", "eu", "highest_security"],
+              "description": "Geographic restriction label"
+            }
+          },
+          "additionalProperties": false
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "pending", "expired", "failed", "deleted"],
+          "description": "Certificate status"
+        }
+      },
+      "required": ["id", "certificate", "private_key"],
+      "additionalProperties": false
+    },
+    "ssl_page_rule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$",
+          "description": "Page rule ID"
+        },
+        "url_pattern": {
+          "type": "string",
+          "description": "URL pattern to match"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "description": "Rule priority"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "disabled"],
+          "description": "Rule status"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": ["always_use_https", "ssl", "edge_cache_ttl", "browser_cache_ttl"]
+              },
+              "value": {
+                "type": ["string", "integer", "boolean"]
+              }
+            },
+            "required": ["id", "value"],
+            "additionalProperties": false
+          },
+          "description": "Rule actions"
+        }
+      },
+      "required": ["id", "url_pattern", "priority", "status", "actions"],
+      "additionalProperties": false
+    }
+  }
+}
