@@ -1,0 +1,75 @@
+{
+  "$schema": "../.cursor/rules/models.schema.json",
+  "title": "RDP",
+  "type": "object",
+  "description": "RDP model representing Remote Desktop Protocol connections, servers, or configurations",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "host": {
+      "type": "string",
+      "description": "RDP host address",
+      "maxLength": 255
+    },
+    "port": {
+      "type": "integer",
+      "description": "RDP port number",
+      "default": 3389,
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "username": {
+      "type": "string",
+      "description": "RDP username",
+      "maxLength": 255
+    },
+    "domain": {
+      "type": "string",
+      "description": "Windows domain name (optional)",
+      "maxLength": 255
+    },
+    "name": {
+      "type": "string",
+      "description": "RDP connection name or alias",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "description": "RDP connection description"
+    },
+    "active": {
+      "type": "boolean",
+      "description": "Whether the RDP connection is active",
+      "default": true
+    },
+    "config": {
+      "type": "object",
+      "description": "RDP configuration stored as JSON"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    },
+    "deletedAt": {
+      "type": "string",
+      "description": "Soft delete timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id"]
+}
+

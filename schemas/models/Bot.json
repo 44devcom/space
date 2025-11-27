@@ -1,0 +1,58 @@
+{
+  "$schema": "../.cursor/rules/models.schema.json",
+  "title": "Bot",
+  "type": "object",
+  "description": "Bot model representing automated agents or bots",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "name": {
+      "type": "string",
+      "description": "Bot name",
+      "maxLength": 255
+    },
+    "type": {
+      "type": "string",
+      "description": "Bot type or category",
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "description": "Bot description"
+    },
+    "active": {
+      "type": "boolean",
+      "description": "Whether the bot is active",
+      "default": true
+    },
+    "config": {
+      "type": "object",
+      "description": "Bot configuration stored as JSON"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    },
+    "deletedAt": {
+      "type": "string",
+      "description": "Soft delete timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id"]
+}
+

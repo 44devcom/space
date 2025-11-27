@@ -1,0 +1,60 @@
+{
+  "$schema": "../.cursor/rules/models.schema.json",
+  "title": "Web",
+  "type": "object",
+  "description": "Web model representing web pages, websites, or web resources",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "url": {
+      "type": "string",
+      "description": "Web URL",
+      "maxLength": 1000
+    },
+    "title": {
+      "type": "string",
+      "description": "Web page title",
+      "maxLength": 500
+    },
+    "description": {
+      "type": "string",
+      "description": "Web page description"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain name",
+      "maxLength": 255,
+      "x-index": true
+    },
+    "active": {
+      "type": "boolean",
+      "description": "Whether the web resource is active",
+      "default": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    },
+    "deletedAt": {
+      "type": "string",
+      "description": "Soft delete timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id"]
+}
+

@@ -1,0 +1,75 @@
+{
+  "$schema": "../.cursor/rules/models.schema.json",
+  "title": "SSH",
+  "type": "object",
+  "description": "SSH model representing SSH connections, servers, or configurations",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "host": {
+      "type": "string",
+      "description": "SSH host address",
+      "maxLength": 255
+    },
+    "port": {
+      "type": "integer",
+      "description": "SSH port number",
+      "default": 22,
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "username": {
+      "type": "string",
+      "description": "SSH username",
+      "maxLength": 255
+    },
+    "keyPath": {
+      "type": "string",
+      "description": "Path to SSH private key file",
+      "maxLength": 500
+    },
+    "name": {
+      "type": "string",
+      "description": "SSH connection name or alias",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "description": "SSH connection description"
+    },
+    "active": {
+      "type": "boolean",
+      "description": "Whether the SSH connection is active",
+      "default": true
+    },
+    "config": {
+      "type": "object",
+      "description": "SSH configuration stored as JSON"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    },
+    "deletedAt": {
+      "type": "string",
+      "description": "Soft delete timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id"]
+}
+
