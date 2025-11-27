@@ -1,0 +1,57 @@
+{
+  "$schema": "../../.cursor/rules/models.schema.json",
+  "title": "List",
+  "type": "object",
+  "description": "Base list model for ordered collections of items",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "name": {
+      "type": "string",
+      "description": "List name",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "description": "List description"
+    },
+    "type": {
+      "type": "string",
+      "description": "List type classification",
+      "maxLength": 100,
+      "x-index": true
+    },
+    "order": {
+      "type": "integer",
+      "description": "Display order",
+      "default": 0
+    },
+    "items": {
+      "type": "array",
+      "description": "Array of item IDs or references",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id", "name"]
+}
+

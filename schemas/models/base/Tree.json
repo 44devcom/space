@@ -1,0 +1,56 @@
+{
+  "$schema": "../../.cursor/rules/models.schema.json",
+  "title": "Tree",
+  "type": "object",
+  "description": "Base tree model for hierarchical structures with parent-child relationships",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "parentId": {
+      "type": "integer",
+      "description": "Reference to parent node",
+      "x-index": true
+    },
+    "name": {
+      "type": "string",
+      "description": "Node name",
+      "maxLength": 255
+    },
+    "path": {
+      "type": "string",
+      "description": "Hierarchical path (e.g., /1/2/3/)",
+      "maxLength": 1000,
+      "x-index": true
+    },
+    "level": {
+      "type": "integer",
+      "description": "Depth level in the tree (0 = root)",
+      "default": 0
+    },
+    "order": {
+      "type": "integer",
+      "description": "Sibling order",
+      "default": 0
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id", "name"]
+}
+

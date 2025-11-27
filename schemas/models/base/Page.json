@@ -1,0 +1,78 @@
+{
+  "$schema": "../../.cursor/rules/models.schema.json",
+  "title": "Page",
+  "type": "object",
+  "description": "Base page model for web pages with content and SEO fields",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "title": {
+      "type": "string",
+      "description": "Page title",
+      "maxLength": 500
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-friendly identifier",
+      "maxLength": 255,
+      "x-index": true,
+      "x-unique": true
+    },
+    "url": {
+      "type": "string",
+      "description": "Full page URL",
+      "maxLength": 1000,
+      "x-index": true
+    },
+    "content": {
+      "type": "string",
+      "description": "Page content (HTML or markdown)"
+    },
+    "excerpt": {
+      "type": "string",
+      "description": "Short page excerpt",
+      "maxLength": 500
+    },
+    "metaTitle": {
+      "type": "string",
+      "description": "SEO meta title",
+      "maxLength": 500
+    },
+    "metaDescription": {
+      "type": "string",
+      "description": "SEO meta description",
+      "maxLength": 1000
+    },
+    "published": {
+      "type": "boolean",
+      "description": "Whether the page is published",
+      "default": false
+    },
+    "publishedAt": {
+      "type": "string",
+      "description": "Publication timestamp",
+      "format": "date-time"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    },
+    "deletedAt": {
+      "type": "string",
+      "description": "Soft delete timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id", "title", "slug"]
+}
+

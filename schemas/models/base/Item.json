@@ -1,0 +1,60 @@
+{
+  "$schema": "../../.cursor/rules/models.schema.json",
+  "title": "Item",
+  "type": "object",
+  "description": "Base item model with common fields for listable items",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "title": {
+      "type": "string",
+      "description": "Item title",
+      "maxLength": 500
+    },
+    "description": {
+      "type": "string",
+      "description": "Item description"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-friendly identifier",
+      "maxLength": 255,
+      "x-index": true
+    },
+    "order": {
+      "type": "integer",
+      "description": "Display order",
+      "default": 0
+    },
+    "active": {
+      "type": "boolean",
+      "description": "Whether the item is active",
+      "default": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    },
+    "deletedAt": {
+      "type": "string",
+      "description": "Soft delete timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id"]
+}
+

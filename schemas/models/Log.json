@@ -1,0 +1,73 @@
+{
+  "$schema": "../.cursor/rules/models.schema.json",
+  "title": "Log",
+  "type": "object",
+  "description": "Log model for tracking changes to entities",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "entityType": {
+      "type": "string",
+      "description": "Type of entity that was changed (e.g., 'Car', 'User')",
+      "maxLength": 100
+    },
+    "entityId": {
+      "type": "integer",
+      "description": "ID of the entity that was changed",
+      "x-index": true
+    },
+    "action": {
+      "type": "string",
+      "description": "Type of action performed (create, update, delete)",
+      "enum": ["create", "update", "delete"],
+      "maxLength": 50
+    },
+    "userId": {
+      "type": "integer",
+      "description": "ID of the user who made the change",
+      "x-index": true
+    },
+    "randomCarId": {
+      "type": "integer",
+      "description": "Reference to a random car (for testing or logging purposes)",
+      "x-index": true
+    },
+    "oldValues": {
+      "type": "object",
+      "description": "Previous values before the change (stored as JSON)"
+    },
+    "newValues": {
+      "type": "object",
+      "description": "New values after the change (stored as JSON)"
+    },
+    "changes": {
+      "type": "object",
+      "description": "Diff of changed fields (stored as JSON)"
+    },
+    "ipAddress": {
+      "type": "string",
+      "description": "IP address of the requester",
+      "maxLength": 45
+    },
+    "userAgent": {
+      "type": "string",
+      "description": "User agent string",
+      "maxLength": 500
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the change (stored as JSON)"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Timestamp when the log entry was created",
+      "format": "date-time"
+    }
+  },
+  "required": ["id", "entityType", "action", "createdAt"]
+}
+

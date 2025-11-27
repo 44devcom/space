@@ -2,51 +2,108 @@
   "$schema": "../.cursor/rules/models.schema.json",
   "title": "Car",
   "type": "object",
+  "description": "Car model representing vehicle listings with JSON-LD support",
   "properties": {
     "id": {
-      "type": "string",
-      "description": "The id field."
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
     },
-    "make": {
+    "context": {
       "type": "string",
-      "description": "The make field."
+      "description": "JSON-LD context",
+      "maxLength": 500
+    },
+    "type": {
+      "type": "string",
+      "description": "JSON-LD type",
+      "default": "Car",
+      "maxLength": 100
+    },
+    "sitemapId": {
+      "type": "integer",
+      "description": "Reference to sitemap",
+      "x-index": true
+    },
+    "url": {
+      "type": "string",
+      "description": "Listing URL",
+      "maxLength": 1000
+    },
+    "category": {
+      "type": "string",
+      "description": "Vehicle category",
+      "maxLength": 100
+    },
+    "brand": {
+      "type": "string",
+      "description": "Vehicle brand",
+      "maxLength": 100
     },
     "model": {
       "type": "string",
-      "description": "The model field."
+      "description": "Vehicle model",
+      "maxLength": 100
     },
-    "year": {
-      "type": "integer",
-      "description": "The year field."
-    },
-    "color": {
+    "details": {
       "type": "string",
-      "description": "The color field."
+      "description": "Additional details"
     },
-    "price": {
-      "type": "number",
-      "description": "The price field."
-    },
-    "mileage": {
-      "type": "number",
-      "description": "The mileage field."
-    },
-    "vin": {
+    "description": {
       "type": "string",
-      "description": "The vin field."
+      "description": "Vehicle description"
     },
-    "isAvailable": {
-      "type": "boolean",
-      "description": "The isAvailable field."
+    "title": {
+      "type": "string",
+      "description": "Listing title",
+      "maxLength": 500
     },
-    "features": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "The features field."
+    "adSellerName": {
+      "type": "string",
+      "description": "Seller name",
+      "maxLength": 200
+    },
+    "email": {
+      "type": "string",
+      "description": "Contact email",
+      "format": "email",
+      "maxLength": 255
+    },
+    "phonePrimary": {
+      "type": "string",
+      "description": "Primary phone number",
+      "maxLength": 20
+    },
+    "phoneSecondary": {
+      "type": "string",
+      "description": "Secondary phone number",
+      "maxLength": 20
+    },
+    "typeClasses": {
+      "type": "string",
+      "description": "Type classes",
+      "maxLength": 200
+    },
+    "notes": {
+      "type": "object",
+      "description": "Additional notes stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    },
+    "deletedAt": {
+      "type": "string",
+      "description": "Soft delete timestamp",
+      "format": "date-time"
     }
   },
-  "required": ["id", "make", "model", "year"]
+  "required": ["id"]
 }
-

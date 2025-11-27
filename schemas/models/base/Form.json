@@ -1,0 +1,71 @@
+{
+  "$schema": "../../.cursor/rules/models.schema.json",
+  "title": "Form",
+  "type": "object",
+  "description": "Base form model for form submissions and configurations",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "name": {
+      "type": "string",
+      "description": "Form name",
+      "maxLength": 255
+    },
+    "type": {
+      "type": "string",
+      "description": "Form type classification",
+      "maxLength": 100,
+      "x-index": true
+    },
+    "fields": {
+      "type": "object",
+      "description": "Form field definitions stored as JSON"
+    },
+    "data": {
+      "type": "object",
+      "description": "Form submission data stored as JSON"
+    },
+    "status": {
+      "type": "string",
+      "description": "Form submission status",
+      "enum": ["draft", "submitted", "processed", "rejected"],
+      "default": "draft",
+      "maxLength": 50
+    },
+    "userId": {
+      "type": "integer",
+      "description": "Reference to user who submitted the form",
+      "x-index": true
+    },
+    "ipAddress": {
+      "type": "string",
+      "description": "IP address of the submitter",
+      "maxLength": 45
+    },
+    "userAgent": {
+      "type": "string",
+      "description": "User agent string",
+      "maxLength": 500
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id", "name"]
+}
+

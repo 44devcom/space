@@ -1,0 +1,45 @@
+{
+  "$schema": "../../.cursor/rules/models.schema.json",
+  "title": "Data",
+  "type": "object",
+  "description": "Base data model for storing arbitrary key-value data",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Primary key identifier",
+      "x-primary-key": true,
+      "x-auto-increment": true
+    },
+    "key": {
+      "type": "string",
+      "description": "Data key identifier",
+      "maxLength": 255,
+      "x-index": true
+    },
+    "value": {
+      "type": "object",
+      "description": "Data value stored as JSON"
+    },
+    "type": {
+      "type": "string",
+      "description": "Data type classification",
+      "maxLength": 100
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata stored as JSON"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Record creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Record update timestamp",
+      "format": "date-time"
+    }
+  },
+  "required": ["id", "key"]
+}
+
