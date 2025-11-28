@@ -1,0 +1,36 @@
+{
+  "name": "create-wizard-agent",
+  "version": "1.0.0",
+  "description": "Orchestrates project creation by generating a plan and executing it. Top-level UX flow: Idea → Plan → Execution.",
+  "manages": {
+    "files": [
+      ".cursor/plans/*.plan.json"
+    ],
+    "directories": [
+      ".cursor/plans"
+    ]
+  },
+  "dependencies": [
+    "create-plan-agent",
+    "run-plan-agent"
+  ],
+  "toolsUsed": [
+    "create-plan",
+    "run-plan"
+  ],
+  "workflow": [
+    "parse project description",
+    "detect stack and domain",
+    "call create-plan-agent to generate plan",
+    "save plan to .cursor/plans/<id>.plan.json",
+    "print plan overview (milestones, issues, task types)",
+    "execute plan with initial --dry preview",
+    "execute plan with final run"
+  ],
+  "runs": "run-create-wizard-agent.sh",
+  "output": {
+    "summary": "Project plan created and execution started.",
+    "updatesState": false
+  }
+}
+

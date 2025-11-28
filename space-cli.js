@@ -26,6 +26,7 @@ Usage:
   space workspace switch <name>
   space env create <name?> <type?>
   space env switch <name>
+  space create wizard <description>
   space build
   space test
   space release
@@ -70,6 +71,28 @@ Commands map to agents and tools in the ecosystem.
         return AGENT("env-agent");
       if (args[1] === "switch")
         return AGENT("env-agent");
+      return help();
+
+    case "create":
+      if (args[1] === "wizard") {
+        const description = args.slice(2).join(" ");
+        if (!description) {
+          console.error("Error: Project description required");
+          console.error("Usage: space create wizard <description>");
+          process.exit(1);
+        }
+        return spawnSync("node", [
+          "cursor-agent.js",
+          "run",
+          "create-wizard-agent"
+        ], {
+          stdio: "inherit",
+          env: {
+            ...process.env,
+            SPACE_PROJECT_DESC: description
+          }
+        });
+      }
       return help();
 
     case "build":

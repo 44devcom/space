@@ -9,7 +9,8 @@
       "docs-agent",
       "build-agent",
       "test-agent",
-      "release-agent"
+      "release-agent",
+      "create-wizard-agent"
     ],
     "stateFile": ".cursor/state.json",
     "workspaceFile": ".cursor/workspace.json",
