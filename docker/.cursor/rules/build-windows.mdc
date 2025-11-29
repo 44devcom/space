@@ -1,0 +1,487 @@
+---
+alwaysApply: true
+---
+
+# Docker Desktop - Windows Configuration
+
+## Overview
+
+Windows Docker Desktop supports both WSL2 backend (recommended) and Hyper-V backend. WSL2 provides better performance and native Linux path support.
+
+## Backend Selection
+
+### WSL2 Backend (Recommended)
+- Better performance
+- Native Linux file system
+- Use WSL2 paths: `/mnt/c/Users/...`
+
+### Hyper-V Backend
+- Traditional Windows backend
+- Use Windows paths: `C:\Users\...`
+- Slower file operations
+
+## Volume Mounts
+
+### WSL2 Paths (Recommended)
+```yaml
+volumes:
+  # Use WSL2 paths for better performance
+  - /mnt/c/Users/YourName/project/app:/app:ro
+  - /mnt/c/Users/YourName/project/output:/app/output
+```
+
+### Windows Paths
+```yaml
+volumes:
+  # Windows paths (slower, but works)
+  - C:/Users/YourName/project/app:/app:ro
+  - C:/Users/YourName/project/output:/app/output
+  
+  # Or with forward slashes
+  - C/Users/YourName/project/app:/app:ro
+```
+
+### Relative Paths
+```yaml
+volumes:
+  - ./app:/app:ro
+  - ./output:/app/output
+```
+
+### Path Conversion
+```yaml
+environment:
+  COMPOSE_CONVERT_WINDOWS_PATHS: 1  # Auto-convert Windows paths
+```
+
+## ADB Device Access
+
+### TCP/IP Connection (Recommended)
+Windows Docker Desktop has limited USB passthrough support. Use TCP/IP:
+
+```powershell
+# Install ADB (if not installed)
+# Via Chocolatey
+choco install adb
+
+# Or download Android Platform Tools
+# https://developer.android.com/studio/releases/platform-tools
+
+# Connect device
+adb tcpip 5555
+adb connect <device-ip>:5555
+```
+
+### In Container
+```yaml
+environment:
+  ADB_SERVER_SOCKET: tcp:5037
+network_mode: host  # For ADB TCP connection
+```
+
+## Network Configuration
+
+### Host Network Mode
+```yaml
+network_mode: host  # Access host network for ADB
+```
+
+### Bridge Network
+```yaml
+networks:
+  - default
+ports:
+  - "8000:8000"
+extra_hosts:
+  - "host.docker.internal:host-gateway"
+```
+
+## Performance Considerations
+
+### WSL2 Backend
+- Use WSL2 paths: `/mnt/c/...`
+- Better file system performance
+- Native Linux compatibility
+
+### Hyper-V Backend
+- Use Windows paths: `C:\...`
+- Slower file operations
+- Path translation overhead
+
+### Volume Mount Options
+```yaml
+# WSL2 backend supports cached/delegated
+volumes:
+  - ./app:/app:ro,cached
+  - ./build:/app/build:delegated
+```
+
+## Example docker-compose.yml (Windows)
+
+### WSL2 Backend
+```yaml
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: docker/android/Dockerfile
+    container_name: android-builder
+    environment:
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_ABI: arm64-v8a
+      ADB_SERVER_SOCKET: tcp:5037
+      COMPOSE_CONVERT_WINDOWS_PATHS: 1
+    volumes:
+      # Use WSL2 paths for better performance
+      - /mnt/c/Users/YourName/project/app:/app:ro
+      - /mnt/c/Users/YourName/project/build:/app/build
+      - /mnt/c/Users/YourName/project/output:/app/output
+    network_mode: host
+```
+
+### Hyper-V Backend
+```yaml
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: docker/android/Dockerfile
+    environment:
+      ANDROID_HOME: /opt/android-sdk
+      ADB_SERVER_SOCKET: tcp:5037
+    volumes:
+      # Windows paths
+      - C:/Users/YourName/project/app:/app:ro
+      - C:/Users/YourName/project/output:/app/output
+    network_mode: host
+```
+
+## Windows Setup Steps
+
+### 1. Enable WSL2 Backend
+1. Open Docker Desktop
+2. Settings → General
+3. Enable "Use the WSL 2 based engine"
+4. Apply & Restart
+
+### 2. Install WSL2 (if needed)
+```powershell
+# Run as Administrator
+wsl --install
+wsl --set-default-version 2
+```
+
+### 3. Install ADB
+```powershell
+# Via Chocolatey
+choco install adb
+
+# Or download from:
+# https://developer.android.com/studio/releases/platform-tools
+```
+
+### 4. Connect Android Device
+```powershell
+# Enable USB debugging on device
+# Connect via USB first
+adb devices
+
+# Switch to TCP/IP
+adb tcpip 5555
+
+# Connect via network
+adb connect <device-ip>:5555
+
+# Verify
+adb devices
+```
+
+## File Path Handling
+
+### WSL2 Paths (Best Performance)
+```yaml
+volumes:
+  - /mnt/c/Users/username/project:/app:ro
+  - /mnt/d/Projects:/app/projects:ro
+```
+
+### Windows Paths
+```yaml
+volumes:
+  - C:/Users/username/project:/app:ro
+  - D:/Projects:/app/projects:ro
+```
+
+### Path Conversion
+```yaml
+environment:
+  COMPOSE_CONVERT_WINDOWS_PATHS: 1
+```
+
+## PowerShell vs CMD
+
+### PowerShell (Recommended)
+```powershell
+# Use forward slashes or WSL2 paths
+docker compose up
+
+# Copy files
+docker compose cp container:/path ./local
+```
+
+### CMD
+```cmd
+REM Use forward slashes
+docker compose up
+
+REM Copy files
+docker compose cp container:/path ./local
+```
+
+## Troubleshooting
+
+### Path Not Found
+```yaml
+# Use WSL2 paths instead of Windows paths
+volumes:
+  - /mnt/c/Users/username/project:/app:ro
+```
+
+### Slow Performance
+- Switch to WSL2 backend
+- Use WSL2 paths instead of Windows paths
+- Increase Docker Desktop resources
+
+### ADB Connection Issues
+```powershell
+# Restart ADB
+adb kill-server
+adb start-server
+
+# Check Windows Firewall
+# Ensure port 5555 is allowed
+```
+
+### Permission Denied
+```powershell
+# Fix file permissions in WSL2
+wsl chmod -R 755 /mnt/c/Users/username/project
+```
+
+### Docker Desktop Not Starting
+- Ensure WSL2 is installed and updated
+- Check Windows features: Virtual Machine Platform, WSL
+- Restart Windows if needed
+
+## Deployment - Creating Windows Installers
+
+### MSI Installer (Windows Installer)
+
+#### Prerequisites
+```bash
+# Install WiX Toolset (Windows Installer XML)
+# Download from: https://wixtoolset.org/
+# Or use Docker with WiX
+```
+
+#### Create WiX Project
+```xml
+<!-- FancyApp.wxs -->
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*" Name="FancyApp" Language="1033" Version="1.0.0" 
+             Manufacturer="Your Company" UpgradeCode="YOUR-GUID-HERE">
+        <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+        
+        <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+        <MediaTemplate />
+        
+        <Feature Id="ProductFeature" Title="FancyApp" Level="1">
+            <ComponentGroupRef Id="ProductComponents" />
+        </Feature>
+    </Product>
+    
+    <Fragment>
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLFOLDER" Name="FancyApp" />
+            </Directory>
+        </Directory>
+    </Fragment>
+    
+    <Fragment>
+        <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+            <Component Id="FancyAppExe">
+                <File Id="FancyAppExe" Source="FancyApp.exe" KeyPath="yes" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>
+```
+
+#### Build MSI
+```bash
+# Build MSI using WiX
+candle FancyApp.wxs
+light FancyApp.wixobj -out FancyApp-1.0.0.msi
+```
+
+### EXE Installer (NSIS/Inno Setup)
+
+#### NSIS Script
+```nsis
+; FancyApp.nsis
+!define APP_NAME "FancyApp"
+!define APP_VERSION "1.0.0"
+!define APP_PUBLISHER "Your Company"
+!define APP_EXECUTABLE "FancyApp.exe"
+
+Name "${APP_NAME}"
+OutFile "${APP_NAME}-${APP_VERSION}-setup.exe"
+InstallDir "$PROGRAMFILES\${APP_NAME}"
+RequestExecutionLevel admin
+
+Section "Install"
+    SetOutPath "$INSTDIR"
+    File "${APP_EXECUTABLE}"
+    CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXECUTABLE}"
+    CreateShortcut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_EXECUTABLE}"
+SectionEnd
+```
+
+#### Build NSIS Installer
+```bash
+# Install NSIS (on Windows host)
+# Download from: https://nsis.sourceforge.io/
+
+# Build installer
+makensis FancyApp.nsis
+```
+
+#### Inno Setup Script
+```ini
+; FancyApp.iss
+[Setup]
+AppName=FancyApp
+AppVersion=1.0.0
+DefaultDirName={pf}\FancyApp
+DefaultGroupName=FancyApp
+OutputDir=installer
+OutputBaseFilename=FancyApp-1.0.0-setup
+Compression=lzma
+SolidCompression=yes
+
+[Files]
+Source: "FancyApp.exe"; DestDir: "{app}"; Flags: ignoreversion
+
+[Icons]
+Name: "{group}\FancyApp"; Filename: "{app}\FancyApp.exe"
+Name: "{commondesktop}\FancyApp"; Filename: "{app}\FancyApp.exe"
+```
+
+### Portable ZIP Package
+
+#### Create Portable Package
+```bash
+# Create portable directory
+mkdir -p FancyApp-portable
+cp FancyApp.exe FancyApp-portable/
+cp -r resources FancyApp-portable/
+
+# Create launcher script (optional)
+cat > FancyApp-portable/run.bat <<EOF
+@echo off
+cd /d "%~dp0"
+start "" "FancyApp.exe"
+EOF
+
+# Create ZIP
+powershell Compress-Archive -Path FancyApp-portable -DestinationPath FancyApp-1.0.0-portable.zip
+```
+
+### Code Signing (Recommended)
+
+#### Sign EXE/MSI
+```powershell
+# Sign executable
+signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com FancyApp.exe
+
+# Sign MSI
+signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com FancyApp-1.0.0.msi
+```
+
+### Docker Compose Service for Windows Installers
+```yaml
+services:
+  windows-installer-builder:
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    volumes:
+      - ./app/build:/app/build:ro
+      - ./installers:/app/installers
+    # Note: Windows installers typically require Windows host
+    # This service prepares files for installer creation
+    command: powershell -Command "
+      New-Item -ItemType Directory -Force -Path C:\installers\FancyApp-portable | Out-Null;
+      Copy-Item C:\app\build\FancyApp.exe C:\installers\FancyApp-portable\;
+      Compress-Archive -Path C:\installers\FancyApp-portable -DestinationPath C:\installers\FancyApp-1.0.0-portable.zip -Force;
+      Write-Host 'Portable package created. Use Windows host for MSI/EXE installers.'
+    "
+```
+
+### Alternative: Use Windows Host Script
+```powershell
+# build-windows-installer.ps1 (run on Windows host)
+
+$AppName = "FancyApp"
+$Version = "1.0.0"
+$BuildDir = "build"
+$InstallerDir = "installers"
+
+# Create portable package
+$PortableDir = "$InstallerDir\$AppName-portable"
+New-Item -ItemType Directory -Force -Path $PortableDir | Out-Null
+Copy-Item "$BuildDir\$AppName.exe" $PortableDir\
+Compress-Archive -Path $PortableDir -DestinationPath "$InstallerDir\$AppName-$Version-portable.zip" -Force
+
+# Build NSIS installer (if NSIS installed)
+if (Get-Command makensis -ErrorAction SilentlyContinue) {
+    makensis "$InstallerDir\$AppName.nsis"
+}
+
+# Build Inno Setup installer (if Inno Setup installed)
+if (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
+    & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "$InstallerDir\$AppName.iss"
+}
+
+Write-Host "Installers created in $InstallerDir"
+```
+
+### WiX Docker Alternative
+```yaml
+services:
+  wix-builder:
+    image: wixdocker/wix:latest
+    volumes:
+      - ./app/build:/app/build:ro
+      - ./installers:/app/installers
+      - ./wix:/app/wix:ro
+    command: >
+      sh -c "
+        # WiX tools are available in the container
+        candle /app/wix/FancyApp.wxs -o /app/installers/ &&
+        light /app/installers/FancyApp.wixobj -o /app/installers/FancyApp-1.0.0.msi
+      "
+```
+
+## Notes
+
+- WSL2 backend provides best performance
+- Use WSL2 paths (`/mnt/c/...`) for better speed
+- TCP/IP required for ADB (USB passthrough limited)
+- Path conversion available with `COMPOSE_CONVERT_WINDOWS_PATHS`
+- PowerShell recommended over CMD for better compatibility
+- MSI installers for Windows Installer integration
+- EXE installers (NSIS/Inno Setup) for custom installers
+- Portable ZIP packages for no-install distribution
+- Code signing recommended for distribution
+- WiX Toolset for professional MSI creation

@@ -1,0 +1,613 @@
+---
+alwaysApply: true
+---
+
+# Android Docker Build Service
+
+## Purpose
+
+Dockerized environment for building, signing, and deploying Android APKs, particularly for Qt/C++ applications.
+
+## Image Options
+
+### Option 1: Official Android SDK Image
+- `android/android-sdk:latest` (official)
+- Includes: Android SDK, build-tools, platform-tools
+
+### Option 2: Custom Qt Android Builder
+- Base: `ubuntu:22.04` or `debian:bullseye`
+- Includes:
+  - Qt Android toolchain
+  - Android SDK (via sdkmanager)
+  - CMake
+  - Java JDK (OpenJDK 11+)
+  - Android NDK
+  - Gradle (for Android builds)
+
+## Directory Structure
+
+```
+/app
+├── CMakeLists.txt
+├── main.cpp
+├── sources/          # Application source code
+├── build-android/    # Android build output
+└── android-build/    # Gradle build directory
+    └── build/
+        └── outputs/
+            └── apk/
+                └── release/
+                    └── *.apk
+```
+
+## Build Steps
+
+1. **Install Android SDK Components**
+   ```bash
+   sdkmanager "platform-tools" "build-tools;latest" "platforms;android-33"
+   sdkmanager "ndk;latest"
+   ```
+
+2. **Set Environment Variables**
+   ```bash
+   export ANDROID_HOME=/opt/android-sdk
+   export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/latest
+   export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/latest
+   ```
+
+3. **Configure CMake for Android**
+   ```bash
+   cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+         -DANDROID_ABI=arm64-v8a \
+         -DANDROID_PLATFORM=android-28 \
+         -DCMAKE_BUILD_TYPE=Release \
+         /app
+   ```
+
+4. **Build APK**
+   ```bash
+   make FancyApp_make_apk -j$(nproc)
+   ```
+
+## APK Signing
+
+### Debug Keystore (Development)
+```bash
+keytool -genkey -v \
+  -keystore /app/debug.keystore \
+  -alias androiddebugkey \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000 \
+  -storepass android \
+  -keypass android \
+  -dname "CN=Android Debug,O=Android,C=US"
+```
+
+### Sign APK with apksigner (Recommended)
+```bash
+apksigner sign \
+  --ks /app/debug.keystore \
+  --ks-pass pass:android \
+  --ks-key-alias androiddebugkey \
+  --key-pass pass:android \
+  --out /app/output/FancyApp-signed.apk \
+  /app/build-android/android-build/build/outputs/apk/release/android-build-release-unsigned.apk
+```
+
+### Sign APK with jarsigner (Fallback)
+```bash
+# Sign first
+jarsigner -verbose \
+  -sigalg SHA256withRSA \
+  -digestalg SHA-256 \
+  -keystore /app/debug.keystore \
+  -storepass android \
+  -keypass android \
+  /app/temp.apk \
+  androiddebugkey
+
+# Then align (critical for native libraries)
+zipalign -f -v 4 /app/temp.apk /app/output/FancyApp-signed.apk
+```
+
+## Volumes
+
+- `/app` — Application source code (read-only)
+- `/app/build-android` — Build output (read-write)
+- `/app/output` — Signed APK output directory
+- `/app/debug.keystore` — Debug signing key (mounted as secret in production)
+
+## Environment Variables
+
+```bash
+ANDROID_HOME=/opt/android-sdk
+ANDROID_NDK_HOME=$ANDROID_HOME/ndk/latest
+ANDROID_ABI=arm64-v8a          # or armeabi-v7a, x86, x86_64
+ANDROID_PLATFORM=android-28
+CMAKE_BUILD_TYPE=Release
+QT_ANDROID_TOOLCHAIN_FILE=/path/to/qt/android/toolchain.cmake
+```
+
+## Docker Compose Service Example
+
+```yaml
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: docker/android/Dockerfile
+    container_name: android-builder
+    environment:
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_ABI: arm64-v8a
+      ANDROID_PLATFORM: android-28
+    volumes:
+      - ./app:/app:ro
+      - ./app/build-android:/app/build-android
+      - ./output:/app/output
+      - android-keystore:/app/keystore:ro
+    networks:
+      - default
+    command: >
+      sh -c "
+        cmake -DCMAKE_TOOLCHAIN_FILE=$${QT_ANDROID_TOOLCHAIN_FILE} \
+              -DANDROID_ABI=$${ANDROID_ABI} \
+              -DANDROID_PLATFORM=$${ANDROID_PLATFORM} \
+              -DCMAKE_BUILD_TYPE=Release \
+              /app /app/build-android &&
+        make FancyApp_make_apk -j$$(nproc) &&
+        apksigner sign --ks /app/keystore/debug.keystore \
+          --ks-pass pass:android \
+          --out /app/output/FancyApp-signed.apk \
+          /app/build-android/android-build/build/outputs/apk/release/*.apk
+      "
+```
+
+## Healthcheck
+
+```bash
+test: ["CMD", "test", "-f", "/app/output/FancyApp-signed.apk"]
+interval: 30s
+timeout: 10s
+retries: 3
+```
+
+## Platform-Specific Configurations
+
+### Docker Desktop - Linux
+
+#### Volume Mounts
+```yaml
+volumes:
+  - ./app:/app:ro
+  - ./app/build-android:/app/build-android
+  - ./output:/app/output
+  # Linux: Direct path mapping works as-is
+```
+
+#### ADB Device Access
+```yaml
+devices:
+  - /dev/bus/usb:/dev/bus/usb  # USB passthrough for ADB
+```
+
+#### Performance
+- Native Docker engine (best performance)
+- No file system translation overhead
+- Direct USB device access
+
+#### Example docker-compose.yml (Linux)
+```yaml
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: docker/android/Dockerfile
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    privileged: true  # Required for USB access
+    volumes:
+      - ./app:/app:ro
+      - ./output:/app/output
+```
+
+---
+
+### Docker Desktop - macOS
+
+#### Volume Mounts
+```yaml
+volumes:
+  - ./app:/app:ro
+  - ./app/build-android:/app/build-android
+  - ./output:/app/output
+  # macOS: Paths work with Docker Desktop file sharing
+```
+
+#### ADB Device Access
+```yaml
+# macOS: Use TCP/IP connection instead of USB
+# Enable "Network debugging" on Android device
+environment:
+  ADB_SERVER_SOCKET: tcp:5037
+```
+
+#### Performance Considerations
+- File system translation via Docker Desktop (slight overhead)
+- Use `:cached` or `:delegated` for better performance:
+  ```yaml
+  volumes:
+    - ./app:/app:ro,cached
+    - ./app/build-android:/app/build-android:delegated
+  ```
+
+#### macOS-Specific Setup
+```bash
+# Install ADB via Homebrew (host)
+brew install android-platform-tools
+
+# Connect device via TCP/IP
+adb tcpip 5555
+adb connect <device-ip>:5555
+
+# Then use TCP connection in container
+docker compose exec android-builder adb connect <device-ip>:5555
+```
+
+#### Example docker-compose.yml (macOS)
+```yaml
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: docker/android/Dockerfile
+    environment:
+      ADB_SERVER_SOCKET: tcp:5037
+    volumes:
+      - ./app:/app:ro,cached
+      - ./app/build-android:/app/build-android:delegated
+      - ./output:/app/output
+    network_mode: host  # For ADB TCP connection
+```
+
+---
+
+### Docker Desktop - Windows
+
+#### Volume Mounts
+```yaml
+volumes:
+  # Windows: Use forward slashes or WSL2 paths
+  - ./app:/app:ro
+  - ./app/build-android:/app/build-android
+  - ./output:/app/output
+  # Or WSL2 path:
+  - /mnt/c/Users/YourName/project:/app:ro
+```
+
+#### ADB Device Access
+```yaml
+# Windows: Use TCP/IP connection (recommended)
+# Or enable USB passthrough in Docker Desktop settings
+environment:
+  ADB_SERVER_SOCKET: tcp:5037
+```
+
+#### Windows-Specific Path Handling
+```yaml
+# Use WSL2 paths for better performance
+volumes:
+  - /mnt/c/Users/YourName/project/app:/app:ro
+  - /mnt/c/Users/YourName/project/output:/app/output
+
+# Or use Windows paths (slower)
+volumes:
+  - C:/Users/YourName/project/app:/app:ro
+  - C:/Users/YourName/project/output:/app/output
+```
+
+#### Performance Considerations
+- WSL2 backend recommended (better performance)
+- Use `:cached` for read-only mounts
+- Avoid Windows path translation when possible
+
+#### Windows Setup Steps
+1. **Enable WSL2 backend** in Docker Desktop
+2. **Install ADB on Windows**:
+   ```powershell
+   # Via Chocolatey
+   choco install adb
+   
+   # Or download Android Platform Tools
+   ```
+3. **Connect device via TCP/IP**:
+   ```powershell
+   adb tcpip 5555
+   adb connect <device-ip>:5555
+   ```
+
+#### Example docker-compose.yml (Windows)
+```yaml
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: docker/android/Dockerfile
+    environment:
+      ADB_SERVER_SOCKET: tcp:5037
+      # Windows: Set WSL2 path if using WSL2 backend
+      COMPOSE_CONVERT_WINDOWS_PATHS: 1
+    volumes:
+      # Use WSL2 paths for better performance
+      - /mnt/c/Users/YourName/project/app:/app:ro
+      - /mnt/c/Users/YourName/project/output:/app/output
+    network_mode: host  # For ADB TCP connection
+```
+
+---
+
+## Cross-Platform ADB Connection
+
+### Method 1: TCP/IP (Recommended for macOS/Windows)
+```bash
+# On host machine
+adb tcpip 5555
+adb connect <device-ip>:5555
+
+# In container
+docker compose exec android-builder adb connect <device-ip>:5555
+docker compose exec android-builder adb devices
+```
+
+### Method 2: USB Passthrough (Linux only)
+```yaml
+# Requires privileged mode
+devices:
+  - /dev/bus/usb:/dev/bus/usb
+privileged: true
+```
+
+### Method 3: ADB Server Proxy (All platforms)
+```yaml
+# Share host ADB server with container
+volumes:
+  - ~/.android:/root/.android  # ADB keys
+environment:
+  ADB_SERVER_SOCKET: tcp:host.docker.internal:5037
+```
+
+## Deployment with ADB
+
+### Prerequisites
+- Android device connected via USB or TCP/IP
+- USB debugging enabled on device
+- ADB installed in container (included in Android SDK)
+
+### Check Device Connection
+```bash
+# List connected devices
+docker compose exec android-builder adb devices
+
+# Expected output:
+# List of devices attached
+# <device-id>    device
+```
+
+### Install APK to Device
+```bash
+# Install APK (replaces existing if present)
+docker compose exec android-builder adb install -r /app/output/FancyApp-signed.apk
+
+# Install with options
+docker compose exec android-builder adb install \
+  -r \                    # Replace existing
+  -d \                    # Allow downgrade
+  -g \                    # Grant all runtime permissions
+  /app/output/FancyApp-signed.apk
+```
+
+### Uninstall Existing App
+```bash
+# Uninstall by package name
+docker compose exec android-builder adb uninstall org.qtproject.example.FancyApp
+
+# Uninstall and keep data
+docker compose exec android-builder adb uninstall -k org.qtproject.example.FancyApp
+```
+
+### Launch Application
+```bash
+# Launch main activity
+docker compose exec android-builder adb shell am start \
+  -n org.qtproject.example.FancyApp/.QtActivity
+
+# Launch with intent
+docker compose exec android-builder adb shell am start \
+  -a android.intent.action.MAIN \
+  -c android.intent.category.LAUNCHER \
+  -n org.qtproject.example.FancyApp/.QtActivity
+
+# Launch using monkey (alternative)
+docker compose exec android-builder adb shell monkey \
+  -p org.qtproject.example.FancyApp \
+  -c android.intent.category.LAUNCHER 1
+```
+
+### Stop Application
+```bash
+# Force stop app
+docker compose exec android-builder adb shell am force-stop org.qtproject.example.FancyApp
+
+# Clear app data
+docker compose exec android-builder adb shell pm clear org.qtproject.example.FancyApp
+```
+
+### View Logs
+```bash
+# View all logs
+docker compose exec android-builder adb logcat
+
+# Filter by package
+docker compose exec android-builder adb logcat | grep org.qtproject.example.FancyApp
+
+# Clear logs and view new ones
+docker compose exec android-builder adb logcat -c && adb logcat
+
+# View logs with timestamps
+docker compose exec android-builder adb logcat -v time
+```
+
+### Get Device Information
+```bash
+# Get device model
+docker compose exec android-builder adb shell getprop ro.product.model
+
+# Get Android version
+docker compose exec android-builder adb shell getprop ro.build.version.release
+
+# Get API level
+docker compose exec android-builder adb shell getprop ro.build.version.sdk
+
+# Get all device properties
+docker compose exec android-builder adb shell getprop
+```
+
+### Complete Deployment Workflow
+```bash
+#!/bin/bash
+# Complete deployment script
+
+PACKAGE_NAME="org.qtproject.example.FancyApp"
+APK_PATH="/app/output/FancyApp-signed.apk"
+ACTIVITY="${PACKAGE_NAME}/.QtActivity"
+
+# Check device connection
+echo "Checking device connection..."
+docker compose exec android-builder adb devices
+
+# Uninstall existing app (optional)
+echo "Uninstalling existing app..."
+docker compose exec android-builder adb uninstall ${PACKAGE_NAME} || true
+
+# Install APK
+echo "Installing APK..."
+docker compose exec android-builder adb install -r ${APK_PATH}
+
+# Launch app
+echo "Launching app..."
+docker compose exec android-builder adb shell am start -n ${ACTIVITY}
+
+# View logs
+echo "Viewing logs (Ctrl+C to stop)..."
+docker compose exec android-builder adb logcat | grep ${PACKAGE_NAME}
+```
+
+### Docker Compose Deployment Service
+```yaml
+services:
+  android-deploy:
+    image: android/android-sdk:latest
+    container_name: android-deploy
+    depends_on:
+      - android-builder
+    volumes:
+      - ./output:/app/output:ro
+      - ~/.android:/root/.android  # ADB keys
+    devices:
+      - /dev/bus/usb:/dev/bus/usb  # Linux only
+    privileged: true  # Required for USB access (Linux)
+    environment:
+      ADB_SERVER_SOCKET: tcp:5037  # For TCP/IP connection
+    network_mode: host  # For ADB TCP connection
+    command: >
+      sh -c "
+        echo 'Waiting for device...' &&
+        adb wait-for-device &&
+        echo 'Device connected!' &&
+        adb devices &&
+        echo 'Installing APK...' &&
+        adb install -r /app/output/FancyApp-signed.apk &&
+        echo 'Launching app...' &&
+        adb shell am start -n org.qtproject.example.FancyApp/.QtActivity &&
+        echo 'Deployment complete!' &&
+        adb logcat | grep org.qtproject.example.FancyApp
+      "
+```
+
+### Extract APK from Container
+```bash
+# Linux/macOS
+docker compose cp android-builder:/app/output/FancyApp-signed.apk ./FancyApp-signed.apk
+
+# Windows (PowerShell)
+docker compose cp android-builder:/app/output/FancyApp-signed.apk .\FancyApp-signed.apk
+
+# Copy with specific name
+docker compose cp android-builder:/app/output/FancyApp-signed.apk ./releases/FancyApp-v1.0.apk
+```
+
+### Troubleshooting ADB Deployment
+
+#### Device Not Found
+```bash
+# Restart ADB server
+docker compose exec android-builder adb kill-server
+docker compose exec android-builder adb start-server
+
+# Check USB connection (Linux)
+lsusb
+
+# Check TCP/IP connection
+docker compose exec android-builder adb connect <device-ip>:5555
+```
+
+#### Permission Denied
+```bash
+# Check USB permissions (Linux)
+ls -l /dev/bus/usb
+
+# Add user to dialout group (Linux)
+sudo usermod -aG dialout $USER
+
+# Use TCP/IP instead of USB
+adb tcpip 5555
+adb connect <device-ip>:5555
+```
+
+#### Installation Failed
+```bash
+# Check if device allows installation from unknown sources
+# Settings > Security > Unknown Sources (older Android)
+# Settings > Apps > Special Access > Install Unknown Apps (newer Android)
+
+# Try with downgrade flag
+docker compose exec android-builder adb install -r -d /app/output/FancyApp-signed.apk
+
+# Check device storage
+docker compose exec android-builder adb shell df -h
+```
+
+## Notes
+
+- **Native Libraries**: APKs with native libraries (.so files) must be properly aligned after signing. Use `apksigner` which handles this automatically, or `zipalign` after `jarsigner`.
+- **Qt Android**: Requires Qt Android toolchain file. Typically located at:
+  - `$QT_HOME/android_arm64_v8a/lib/cmake/Qt6/Qt6AndroidToolchain.cmake`
+- **Multi-ABI**: Build separate APKs for each ABI (arm64-v8a, armeabi-v7a) or use universal APK.
+- **Release Signing**: For production, use a release keystore (mounted as Docker secret, never in image).
+- **Build Cache**: Mount build directories as volumes to speed up incremental builds.
+
+## Troubleshooting
+
+### "Failed to extract native libraries"
+- Ensure APK is aligned: `zipalign -c 4 app.apk`
+- Verify native libraries are stored uncompressed in APK
+- Use `apksigner` instead of `jarsigner` for better compatibility
+
+### "INSTALL_PARSE_FAILED_NO_CERTIFICATES"
+- APK must be signed before installation
+- Use debug keystore for development, release keystore for production
+
+### CMake can't find Qt Android toolchain
+- Set `QT_ANDROID_TOOLCHAIN_FILE` environment variable
+- Or pass `-DCMAKE_TOOLCHAIN_FILE` explicitly to cmake

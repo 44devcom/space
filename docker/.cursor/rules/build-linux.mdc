@@ -1,0 +1,413 @@
+---
+alwaysApply: true
+---
+
+# Docker Desktop - Linux Configuration
+
+## Overview
+
+Linux provides the best Docker performance with native Docker engine support, direct USB device access, and no file system translation overhead.
+
+## Volume Mounts
+
+### Standard Paths
+```yaml
+volumes:
+  - ./app:/app:ro
+  - ./app/build:/app/build
+  - ./output:/app/output
+  # Linux: Direct path mapping works as-is
+```
+
+### Absolute Paths
+```yaml
+volumes:
+  - /home/user/project:/app:ro
+  - /home/user/project/build:/app/build
+```
+
+## USB Device Access
+
+### Direct USB Passthrough
+```yaml
+services:
+  android-builder:
+    devices:
+      - /dev/bus/usb:/dev/bus/usb  # USB passthrough for ADB
+    privileged: true  # Required for USB access
+```
+
+### Specific USB Device
+```yaml
+devices:
+  - /dev/ttyUSB0:/dev/ttyUSB0  # Serial device
+  - /dev/video0:/dev/video0     # Camera device
+```
+
+## Performance
+
+- **Native Docker Engine**: Best performance, no virtualization overhead
+- **Direct File System**: No translation layer, native speed
+- **USB Passthrough**: Direct hardware access
+- **No Path Translation**: Linux paths work directly
+
+## Network Configuration
+
+### Host Network Mode
+```yaml
+network_mode: host  # Access host network directly
+```
+
+### Bridge Network (Default)
+```yaml
+networks:
+  - default
+ports:
+  - "8000:8000"
+```
+
+## Example docker-compose.yml (Linux)
+
+```yaml
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: docker/android/Dockerfile
+    container_name: android-builder
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    privileged: true
+    environment:
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_ABI: arm64-v8a
+    volumes:
+      - ./app:/app:ro
+      - ./app/build-android:/app/build-android
+      - ./output:/app/output
+    networks:
+      - default
+```
+
+## ADB Device Connection
+
+### USB Connection (Recommended)
+```bash
+# Check USB devices
+lsusb
+
+# Connect device
+docker compose exec android-builder adb devices
+
+# Should show device connected via USB
+```
+
+### TCP/IP Connection (Alternative)
+```bash
+# On host
+adb tcpip 5555
+adb connect <device-ip>:5555
+
+# In container
+docker compose exec android-builder adb connect <device-ip>:5555
+```
+
+## File Permissions
+
+### Handling Permission Issues
+```yaml
+# Use user namespace or set user
+user: "${UID}:${GID}"
+
+# Or fix permissions in entrypoint
+volumes:
+  - ./app:/app:ro
+entrypoint: |
+  chown -R appuser:appuser /app/build
+  exec "$@"
+```
+
+## Build Performance Tips
+
+1. **Use BuildKit**:
+   ```bash
+   export DOCKER_BUILDKIT=1
+   docker compose build
+   ```
+
+2. **Cache Mounts**:
+   ```yaml
+   volumes:
+     - build-cache:/root/.cache
+   ```
+
+3. **Parallel Builds**:
+   ```yaml
+   build:
+     context: .
+     dockerfile: Dockerfile
+     parallel: true
+   ```
+
+## Troubleshooting
+
+### USB Device Not Found
+```bash
+# Check USB permissions
+ls -l /dev/bus/usb
+
+# Add user to dialout group
+sudo usermod -aG dialout $USER
+
+# Or use udev rules
+sudo nano /etc/udev/rules.d/99-android.rules
+# SUBSYSTEM=="usb", ATTR{idVendor}=="<vendor-id>", MODE="0666"
+```
+
+### Permission Denied on Volumes
+```bash
+# Fix ownership
+sudo chown -R $USER:$USER ./app
+
+# Or use user namespace in docker-compose
+user: "${UID}:${GID}"
+```
+
+### Slow File Operations
+- Ensure using native Linux paths (not WSL2)
+- Use `:cached` for read-only volumes if needed
+- Check Docker storage driver (prefer overlay2)
+
+## Deployment - Creating Linux Installers
+
+### DEB Package (Debian/Ubuntu)
+
+#### Prerequisites
+```bash
+# Install build tools
+apt-get update && apt-get install -y \
+  build-essential \
+  fakeroot \
+  dpkg-dev \
+  debhelper
+```
+
+#### Create DEB Package Structure
+```bash
+# Create package directory
+mkdir -p deb-build/fancyapp-1.0.0/{DEBIAN,usr/local/bin,usr/share/applications}
+
+# Copy binary
+cp /app/build/FancyApp deb-build/fancyapp-1.0.0/usr/local/bin/
+
+# Create control file
+cat > deb-build/fancyapp-1.0.0/DEBIAN/control <<EOF
+Package: fancyapp
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Your Name <your.email@example.com>
+Description: FancyApp - A fancy application
+ A description of your application.
+EOF
+
+# Create desktop file
+cat > deb-build/fancyapp-1.0.0/usr/share/applications/fancyapp.desktop <<EOF
+[Desktop Entry]
+Name=FancyApp
+Exec=/usr/local/bin/FancyApp
+Icon=fancyapp
+Type=Application
+Categories=Utility;
+EOF
+
+# Build DEB package
+dpkg-deb --build deb-build/fancyapp-1.0.0
+```
+
+#### Docker Compose Service for DEB
+```yaml
+services:
+  linux-deb-builder:
+    image: debian:bullseye
+    volumes:
+      - ./app/build:/app/build:ro
+      - ./installers:/app/installers
+    command: >
+      sh -c "
+        apt-get update && apt-get install -y dpkg-dev debhelper fakeroot &&
+        mkdir -p /app/installers/deb-build/fancyapp-1.0.0/{DEBIAN,usr/local/bin,usr/share/applications} &&
+        cp /app/build/FancyApp /app/installers/deb-build/fancyapp-1.0.0/usr/local/bin/ &&
+        echo 'Package: fancyapp
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Your Name <your.email@example.com>
+Description: FancyApp' > /app/installers/deb-build/fancyapp-1.0.0/DEBIAN/control &&
+        dpkg-deb --build /app/installers/deb-build/fancyapp-1.0.0 /app/installers/fancyapp-1.0.0.deb
+      "
+```
+
+### RPM Package (Red Hat/CentOS/Fedora)
+
+#### Prerequisites
+```bash
+# Install build tools
+yum install -y rpm-build rpmdevtools
+```
+
+#### Create RPM Spec File
+```bash
+# Create spec file
+cat > fancyapp.spec <<EOF
+Name:           fancyapp
+Version:        1.0.0
+Release:        1%{?dist}
+Summary:        FancyApp - A fancy application
+License:        MIT
+Source0:        %{name}-%{version}.tar.gz
+
+%description
+A description of your application.
+
+%prep
+%setup -q
+
+%build
+# Build commands here
+
+%install
+mkdir -p %{buildroot}/usr/local/bin
+cp FancyApp %{buildroot}/usr/local/bin/
+
+%files
+/usr/local/bin/FancyApp
+
+%changelog
+* $(date +"%a %b %d %Y") Your Name <your.email@example.com> - 1.0.0-1
+- Initial release
+EOF
+
+# Build RPM
+rpmbuild -ba fancyapp.spec
+```
+
+### AppImage (Universal Linux)
+
+#### Create AppImage
+```bash
+# Install AppImage tools
+wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+chmod +x appimagetool-x86_64.AppImage
+
+# Create AppDir structure
+mkdir -p AppDir/{usr/bin,usr/share/applications,usr/share/icons}
+
+# Copy binary and resources
+cp FancyApp AppDir/usr/bin/
+cp icon.png AppDir/usr/share/icons/
+
+# Create desktop file
+cat > AppDir/fancyapp.desktop <<EOF
+[Desktop Entry]
+Name=FancyApp
+Exec=usr/bin/FancyApp
+Icon=fancyapp
+Type=Application
+Categories=Utility;
+EOF
+
+# Create AppRun
+cat > AppDir/AppRun <<'EOF'
+#!/bin/bash
+HERE="$(dirname "$(readlink -f "${0}")")"
+exec "${HERE}"/usr/bin/FancyApp "$@"
+EOF
+chmod +x AppDir/AppRun
+
+# Build AppImage
+./appimagetool-x86_64.AppImage AppDir FancyApp-x86_64.AppImage
+```
+
+### Snap Package
+
+#### Create snapcraft.yaml
+```yaml
+name: fancyapp
+version: '1.0.0'
+summary: FancyApp - A fancy application
+description: A description of your application.
+grade: stable
+confinement: strict
+
+apps:
+  fancyapp:
+    command: FancyApp
+    plugs:
+      - network
+      - desktop
+
+parts:
+  fancyapp:
+    plugin: dump
+    source: build/
+    organize:
+      FancyApp: bin/FancyApp
+```
+
+#### Build Snap
+```bash
+# Install snapcraft
+snap install snapcraft --classic
+
+# Build snap
+snapcraft
+```
+
+### Docker Compose Service for All Linux Installers
+```yaml
+services:
+  linux-installer-builder:
+    image: ubuntu:22.04
+    volumes:
+      - ./app/build:/app/build:ro
+      - ./installers:/app/installers
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+    command: >
+      sh -c "
+        apt-get update && apt-get install -y \
+          dpkg-dev debhelper fakeroot \
+          rpm rpm-build \
+          wget file &&
+        # Build DEB
+        mkdir -p /app/installers/deb-build/fancyapp-1.0.0/{DEBIAN,usr/local/bin} &&
+        cp /app/build/FancyApp /app/installers/deb-build/fancyapp-1.0.0/usr/local/bin/ &&
+        echo 'Package: fancyapp
+Version: 1.0.0
+Architecture: amd64
+Maintainer: Your Name <your.email@example.com>
+Description: FancyApp' > /app/installers/deb-build/fancyapp-1.0.0/DEBIAN/control &&
+        dpkg-deb --build /app/installers/deb-build/fancyapp-1.0.0 /app/installers/fancyapp-1.0.0.deb &&
+        # Build AppImage
+        wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/appimagetool &&
+        chmod +x /tmp/appimagetool &&
+        mkdir -p /app/installers/AppDir/usr/bin &&
+        cp /app/build/FancyApp /app/installers/AppDir/usr/bin/ &&
+        /tmp/appimagetool /app/installers/AppDir /app/installers/FancyApp-x86_64.AppImage &&
+        echo 'Installers created successfully!'
+      "
+```
+
+## Notes
+
+- Linux provides the best Docker performance
+- Direct USB access without TCP/IP workarounds
+- No file path translation needed
+- Native Docker engine = no virtualization overhead
+- DEB packages for Debian/Ubuntu
+- RPM packages for Red Hat/CentOS/Fedora
+- AppImage for universal Linux distribution
+- Snap packages for modern Linux distributions

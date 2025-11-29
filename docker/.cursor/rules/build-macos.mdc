@@ -1,0 +1,420 @@
+---
+alwaysApply: true
+---
+
+# Docker Desktop - macOS Configuration
+
+## Overview
+
+macOS uses Docker Desktop with file system translation. Use volume mount options (`:cached`, `:delegated`) for better performance, and TCP/IP for ADB device connections.
+
+## Volume Mounts
+
+### Standard Mounts with Performance Options
+```yaml
+volumes:
+  - ./app:/app:ro,cached          # Read-only, cached
+  - ./app/build:/app/build:delegated  # Read-write, delegated
+  - ./output:/app/output:delegated
+```
+
+### Volume Mount Options
+- `:cached` - Host writes are cached, container reads may be delayed
+- `:delegated` - Container writes are cached, host reads may be delayed
+- `:consistent` - Full consistency (slowest, default)
+
+### Best Practices
+```yaml
+# Read-only source code
+volumes:
+  - ./src:/app/src:ro,cached
+
+# Build output (container writes frequently)
+volumes:
+  - ./build:/app/build:delegated
+
+# Output files (container writes, host reads)
+volumes:
+  - ./output:/app/output:delegated
+```
+
+## ADB Device Access
+
+### TCP/IP Connection (Required)
+macOS Docker Desktop doesn't support direct USB passthrough. Use TCP/IP:
+
+```bash
+# On macOS host
+brew install android-platform-tools
+adb tcpip 5555
+adb connect <device-ip>:5555
+
+# Verify connection
+adb devices
+```
+
+### In Container
+```yaml
+environment:
+  ADB_SERVER_SOCKET: tcp:5037
+network_mode: host  # For ADB TCP connection
+```
+
+## Network Configuration
+
+### Host Network Mode (for ADB)
+```yaml
+network_mode: host  # Access host network for ADB TCP
+```
+
+### Bridge Network (Default)
+```yaml
+networks:
+  - default
+ports:
+  - "8000:8000"
+extra_hosts:
+  - "host.docker.internal:host-gateway"  # Access host services
+```
+
+## Performance Considerations
+
+### File System Performance
+- Use `:cached` for read-only mounts
+- Use `:delegated` for write-heavy operations
+- Avoid `:consistent` unless necessary
+
+### Resource Limits
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '4'
+      memory: 8G
+    reservations:
+      cpus: '2'
+      memory: 4G
+```
+
+### Build Performance
+```yaml
+build:
+  context: .
+  dockerfile: Dockerfile
+  cache_from:
+    - myapp:latest
+```
+
+## Example docker-compose.yml (macOS)
+
+```yaml
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: docker/android/Dockerfile
+    container_name: android-builder
+    environment:
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_ABI: arm64-v8a
+      ADB_SERVER_SOCKET: tcp:5037
+    volumes:
+      - ./app:/app:ro,cached
+      - ./app/build-android:/app/build-android:delegated
+      - ./output:/app/output:delegated
+    network_mode: host
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+```
+
+## macOS-Specific Setup
+
+### Install ADB
+```bash
+# Via Homebrew
+brew install android-platform-tools
+
+# Verify installation
+adb version
+```
+
+### Connect Android Device
+```bash
+# Enable USB debugging on device
+# Connect via USB first
+adb devices
+
+# Switch to TCP/IP
+adb tcpip 5555
+
+# Find device IP (Settings > About phone > IP address)
+adb connect <device-ip>:5555
+
+# Verify
+adb devices
+```
+
+### Docker Desktop Settings
+1. **Resources**: Allocate sufficient CPU and memory
+2. **File Sharing**: Ensure project directory is shared
+3. **Advanced**: Enable VirtioFS (faster file sharing)
+
+## File Path Handling
+
+### Standard Paths
+```yaml
+volumes:
+  - ./app:/app:ro,cached
+  - ~/Documents/project:/app/project:ro,cached
+```
+
+### Absolute Paths
+```yaml
+volumes:
+  - /Users/username/project:/app:ro,cached
+```
+
+## Troubleshooting
+
+### Slow File Operations
+```yaml
+# Use delegated for write-heavy volumes
+volumes:
+  - ./build:/app/build:delegated
+
+# Enable VirtioFS in Docker Desktop settings
+```
+
+### ADB Connection Issues
+```bash
+# Restart ADB server
+adb kill-server
+adb start-server
+
+# Check firewall settings
+# Ensure port 5555 is not blocked
+```
+
+### Permission Issues
+```bash
+# Fix file permissions
+chmod -R 755 ./app
+
+# Or use user namespace
+user: "${UID}:${GID}"
+```
+
+### Docker Desktop Performance
+- Enable VirtioFS for faster file sharing
+- Increase allocated resources (CPU/Memory)
+- Use `:cached` and `:delegated` appropriately
+- Avoid mounting large directories unnecessarily
+
+## Deployment - Creating macOS Installers
+
+### DMG Package (Disk Image)
+
+#### Prerequisites
+```bash
+# macOS host tools (hdiutil, create-dmg)
+# Or use Docker with macOS tools
+```
+
+#### Create DMG Structure
+```bash
+# Create DMG directory
+mkdir -p dmg-build/FancyApp.app/Contents/{MacOS,Resources}
+
+# Copy binary
+cp FancyApp dmg-build/FancyApp.app/Contents/MacOS/
+
+# Create Info.plist
+cat > dmg-build/FancyApp.app/Contents/Info.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>FancyApp</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.yourcompany.fancyapp</string>
+    <key>CFBundleName</key>
+    <string>FancyApp</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+</dict>
+</plist>
+EOF
+
+# Create DMG
+hdiutil create -volname "FancyApp" -srcfolder dmg-build -ov -format UDZO FancyApp-1.0.0.dmg
+```
+
+#### Using create-dmg (Better)
+```bash
+# Install create-dmg
+brew install create-dmg
+
+# Create DMG
+create-dmg \
+  --volname "FancyApp" \
+  --window-pos 200 120 \
+  --window-size 800 400 \
+  --icon-size 100 \
+  --icon "FancyApp.app" 200 190 \
+  --hide-extension "FancyApp.app" \
+  --app-drop-link 600 185 \
+  "FancyApp-1.0.0.dmg" \
+  "FancyApp.app"
+```
+
+### PKG Installer (Package)
+
+#### Create PKG Structure
+```bash
+# Create package root
+mkdir -p pkg-root/Applications
+
+# Copy app
+cp -R FancyApp.app pkg-root/Applications/
+
+# Create distribution.xml
+cat > distribution.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+    <title>FancyApp</title>
+    <pkg-ref id="com.yourcompany.fancyapp"/>
+    <options customize="never" require-scripts="false"/>
+    <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+    <choices-outline>
+        <line choice="com.yourcompany.fancyapp"/>
+    </choices-outline>
+    <choice id="com.yourcompany.fancyapp" visible="false">
+        <pkg-ref id="com.yourcompany.fancyapp"/>
+    </choice>
+    <pkg-ref id="com.yourcompany.fancyapp" version="1.0.0" onConclusion="none">fancyapp.pkg</pkg-ref>
+</installer-gui-script>
+EOF
+
+# Build component package
+pkgbuild --root pkg-root \
+         --identifier com.yourcompany.fancyapp \
+         --version 1.0.0 \
+         --install-location / \
+         fancyapp.pkg
+
+# Build product archive
+productbuild --distribution distribution.xml \
+             --package-path . \
+             --resources Resources \
+             FancyApp-1.0.0.pkg
+```
+
+### Code Signing (Required for Distribution)
+
+#### Sign App
+```bash
+# Sign the app
+codesign --deep --force --verify --verbose \
+  --sign "Developer ID Application: Your Name (TEAM_ID)" \
+  FancyApp.app
+
+# Verify signature
+codesign --verify --verbose FancyApp.app
+```
+
+#### Notarize (for Gatekeeper)
+```bash
+# Create zip for notarization
+ditto -c -k --keepParent FancyApp.app FancyApp.zip
+
+# Submit for notarization
+xcrun notarytool submit FancyApp.zip \
+  --apple-id your.email@example.com \
+  --team-id TEAM_ID \
+  --password "app-specific-password" \
+  --wait
+
+# Staple notarization
+xcrun stapler staple FancyApp.app
+```
+
+### Docker Compose Service for macOS Installers
+```yaml
+services:
+  macos-installer-builder:
+    image: ubuntu:22.04  # Note: macOS tools require macOS host
+    volumes:
+      - ./app/build:/app/build:ro
+      - ./installers:/app/installers
+    # Note: DMG/PKG creation typically requires macOS host
+    # This service prepares the app bundle structure
+    command: >
+      sh -c "
+        mkdir -p /app/installers/FancyApp.app/Contents/{MacOS,Resources} &&
+        cp /app/build/FancyApp /app/installers/FancyApp.app/Contents/MacOS/ &&
+        chmod +x /app/installers/FancyApp.app/Contents/MacOS/FancyApp &&
+        echo 'App bundle structure created. Run on macOS host:
+        hdiutil create -volname \"FancyApp\" -srcfolder /app/installers/FancyApp.app -ov -format UDZO /app/installers/FancyApp-1.0.0.dmg'
+      "
+```
+
+### Alternative: Use macOS Host Script
+```bash
+#!/bin/bash
+# build-macos-installer.sh (run on macOS host)
+
+APP_NAME="FancyApp"
+VERSION="1.0.0"
+BUNDLE_ID="com.yourcompany.fancyapp"
+
+# Create app bundle
+mkdir -p "${APP_NAME}.app/Contents/{MacOS,Resources}"
+cp build/FancyApp "${APP_NAME}.app/Contents/MacOS/"
+
+# Create Info.plist
+cat > "${APP_NAME}.app/Contents/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>${APP_NAME}</string>
+    <key>CFBundleIdentifier</key>
+    <string>${BUNDLE_ID}</string>
+    <key>CFBundleName</key>
+    <string>${APP_NAME}</string>
+    <key>CFBundleVersion</key>
+    <string>${VERSION}</string>
+</dict>
+</plist>
+EOF
+
+# Sign (if certificate available)
+if [ -n "${MACOS_CERT_NAME}" ]; then
+    codesign --deep --force --sign "${MACOS_CERT_NAME}" "${APP_NAME}.app"
+fi
+
+# Create DMG
+hdiutil create -volname "${APP_NAME}" \
+               -srcfolder "${APP_NAME}.app" \
+               -ov -format UDZO \
+               "${APP_NAME}-${VERSION}.dmg"
+```
+
+## Notes
+
+- macOS requires TCP/IP for ADB (no USB passthrough)
+- Use volume mount options for better performance
+- VirtioFS provides better performance than osxfs
+- Host network mode needed for ADB TCP connections
+- File system translation adds slight overhead
+- DMG packages for easy distribution
+- PKG installers for system-wide installation
+- Code signing required for distribution outside App Store
+- Notarization required for Gatekeeper compatibility
