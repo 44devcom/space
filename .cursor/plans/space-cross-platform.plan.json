@@ -1,0 +1,1086 @@
+{
+  "project": {
+    "id": "space-cross-platform",
+    "title": "Space Cross-Platform Application",
+    "description": "Cross-platform desktop and mobile application for Space workspace manager supporting Android, Linux, Windows, and macOS",
+    "domain": "workspace-management",
+    "stack": "generic",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  "milestones": [
+    {
+      "id": "milestone-architecture",
+      "title": "Architecture & Project Setup",
+      "description": "Define application architecture, project structure, and cross-platform build system",
+      "issues": [
+        {
+          "id": "issue-project-structure",
+          "title": "Qt Project Structure Setup",
+          "description": "Create Qt 6 project structure with CMake for cross-platform support",
+          "tasks": [
+            {
+              "id": "task-qt-project-init",
+              "title": "Initialize Qt 6 CMake project",
+              "type": "custom",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-cmake-base",
+                  "action": "Create root CMakeLists.txt with Qt 6 configuration",
+                  "details": "Configure CMake for Qt 6 with required modules (Core, Widgets, Network, QML, Quick, QuickControls2)",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-project-structure",
+                  "action": "Create directory structure: app/, lib/, resources/, tests/, platforms/",
+                  "details": "Organize code into logical modules: core library, application UI, platform-specific code, resources",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-qt-version",
+                  "action": "Set minimum Qt version to 6.5.0",
+                  "details": "Ensure compatibility with all target platforms (Android, Linux, Windows, macOS)",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-platform-config",
+              "title": "Configure platform-specific build settings",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-android-config",
+                  "action": "Add Android build configuration (AndroidManifest.xml, gradle files)",
+                  "details": "Configure Android package name, permissions, minimum SDK version, target SDK version",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-windows-config",
+                  "action": "Add Windows-specific configuration (icon, manifest, installer)",
+                  "details": "Configure Windows application icon, version info, NSIS installer script",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-macos-config",
+                  "action": "Add macOS-specific configuration (Info.plist, bundle structure)",
+                  "details": "Configure macOS bundle identifier, entitlements, code signing",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-linux-config",
+                  "action": "Add Linux-specific configuration (desktop file, AppImage/Flatpak)",
+                  "details": "Create .desktop file, AppImage build script, Flatpak manifest",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-core-architecture",
+          "title": "Core Architecture Design",
+          "description": "Design core architecture with separation of concerns: models, services, views",
+          "tasks": [
+            {
+              "id": "task-core-models",
+              "title": "Define core data models",
+              "type": "schema",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-workspace-model",
+                  "action": "Create Workspace model class",
+                  "details": "Model for workspace metadata (name, branch, path, created/updated timestamps)",
+                  "type": "schema"
+                },
+                {
+                  "id": "subtask-connection-models",
+                  "action": "Create connection models (SSH, RDP, Web)",
+                  "details": "Models based on existing schemas: SSH.json, RDP.json, Web.json",
+                  "type": "schema"
+                },
+                {
+                  "id": "subtask-bot-model",
+                  "action": "Create Bot model class",
+                  "details": "Model for bot configurations and automation",
+                  "type": "schema"
+                }
+              ]
+            },
+            {
+              "id": "task-service-layer",
+              "title": "Implement service layer",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-workspace-service",
+                  "action": "Create WorkspaceService for workspace management",
+                  "details": "Service for creating, switching, listing workspaces",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-connection-service",
+                  "action": "Create ConnectionService for managing connections",
+                  "details": "Service for SSH, RDP, Web connection management",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-storage-service",
+                  "action": "Create StorageService for persistent data",
+                  "details": "Service for local storage using SQLite or JSON files",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestone-desktop-ui",
+      "title": "Desktop UI Implementation",
+      "description": "Implement desktop user interface for Linux, Windows, and macOS using Qt Widgets",
+      "issues": [
+        {
+          "id": "issue-main-window",
+          "title": "Main Window Implementation",
+          "description": "Create main application window with menu, toolbar, and workspace view",
+          "tasks": [
+            {
+              "id": "task-main-window-ui",
+              "title": "Create main window UI",
+              "type": "gui",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-main-window-class",
+                  "action": "Create MainWindow class with QMainWindow base",
+                  "details": "Follow Qt naming conventions: CamelCase for classes, snake_case for widgets",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-menu-bar",
+                  "action": "Add menu bar (File, Edit, View, Workspace, Connections, Help)",
+                  "details": "File: New Workspace, Open Workspace, Exit; Workspace: Create, Switch, List",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-toolbar",
+                  "action": "Add toolbar with quick actions",
+                  "details": "Buttons for: New Workspace, Switch Workspace, New Connection",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-status-bar",
+                  "action": "Add status bar with workspace info",
+                  "details": "Display current workspace name, branch, connection status",
+                  "type": "gui"
+                }
+              ]
+            },
+            {
+              "id": "task-workspace-view",
+              "title": "Create workspace management view",
+              "type": "gui",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-workspace-list",
+                  "action": "Create workspace list widget",
+                  "details": "QListWidget or QTreeWidget showing all workspaces with name, path, last used",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-workspace-details",
+                  "action": "Create workspace details panel",
+                  "details": "Display workspace metadata, branch info, associated connections",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-workspace-actions",
+                  "action": "Add workspace action buttons",
+                  "details": "Create, Switch, Delete, Rename workspace actions",
+                  "type": "gui"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-connection-ui",
+          "title": "Connection Management UI",
+          "description": "Create UI for managing SSH, RDP, and Web connections",
+          "tasks": [
+            {
+              "id": "task-connection-dialog",
+              "title": "Create connection dialog/form",
+              "type": "gui",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-ssh-form",
+                  "action": "Create SSH connection form",
+                  "details": "Fields: name, host, port, username, key path, description",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-rdp-form",
+                  "action": "Create RDP connection form",
+                  "details": "Fields: name, host, port, username, domain, password/key",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-web-form",
+                  "action": "Create Web connection form",
+                  "details": "Fields: name, URL, title, description",
+                  "type": "gui"
+                }
+              ]
+            },
+            {
+              "id": "task-connection-list",
+              "title": "Create connection list view",
+              "type": "gui",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-connection-table",
+                  "action": "Create connection table widget",
+                  "details": "QTableWidget showing: type, name, host/URL, status, actions",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-connection-actions",
+                  "action": "Add connection actions (connect, edit, delete, test)",
+                  "details": "Context menu and toolbar buttons for connection operations",
+                  "type": "gui"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-settings-ui",
+          "title": "Settings & Preferences UI",
+          "description": "Create settings dialog for application preferences",
+          "tasks": [
+            {
+              "id": "task-settings-dialog",
+              "title": "Create settings dialog",
+              "type": "gui",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-settings-categories",
+                  "action": "Add settings categories (General, Workspaces, Connections, Appearance)",
+                  "details": "Use QTreeWidget for category navigation, QStackedWidget for pages",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-general-settings",
+                  "action": "Add general settings (language, theme, auto-start)",
+                  "details": "Language selector, dark/light theme toggle, startup options",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-workspace-settings",
+                  "action": "Add workspace settings (default path, auto-switch)",
+                  "details": "Default workspace directory, workspace switching behavior",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-appearance-settings",
+                  "action": "Add appearance settings (theme, font, icon size)",
+                  "details": "Theme selection, font family/size, UI scaling",
+                  "type": "gui"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestone-mobile-ui",
+      "title": "Mobile UI Implementation (Android)",
+      "description": "Implement Android mobile interface using Qt Quick/QML",
+      "issues": [
+        {
+          "id": "issue-android-qml",
+          "title": "Android QML Application",
+          "description": "Create QML-based Android application with Material Design",
+          "tasks": [
+            {
+              "id": "task-qml-main",
+              "title": "Create main QML application",
+              "type": "gui",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-qml-main-window",
+                  "action": "Create main QML window (ApplicationWindow)",
+                  "details": "Use Qt Quick Controls 2 with Material style for Android",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-qml-navigation",
+                  "action": "Implement navigation drawer/page stack",
+                  "details": "Drawer menu for navigation, PageStack for navigation between screens",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-qml-theme",
+                  "action": "Configure Material Design theme",
+                  "details": "Set Material theme colors, typography, elevation",
+                  "type": "gui"
+                }
+              ]
+            },
+            {
+              "id": "task-qml-workspace-screen",
+              "title": "Create workspace management screen",
+              "type": "gui",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-qml-workspace-list",
+                  "action": "Create workspace list view",
+                  "details": "ListView with workspace cards showing name, path, last used",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-qml-workspace-detail",
+                  "action": "Create workspace detail page",
+                  "details": "Page showing workspace info, connections, actions",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-qml-workspace-form",
+                  "action": "Create workspace creation/edit form",
+                  "details": "Form dialog for creating or editing workspace",
+                  "type": "gui"
+                }
+              ]
+            },
+            {
+              "id": "task-qml-connection-screen",
+              "title": "Create connection management screen",
+              "type": "gui",
+              "priority": 3,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-qml-connection-list",
+                  "action": "Create connection list view",
+                  "details": "ListView with connection cards (SSH, RDP, Web)",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-qml-connection-form",
+                  "action": "Create connection form page",
+                  "details": "Form for adding/editing connections with type-specific fields",
+                  "type": "gui"
+                },
+                {
+                  "id": "subtask-qml-connection-actions",
+                  "action": "Add connection quick actions",
+                  "details": "Swipe actions or FAB for connect, edit, delete",
+                  "type": "gui"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-android-integration",
+          "title": "Android Platform Integration",
+          "description": "Integrate Android-specific features and permissions",
+          "tasks": [
+            {
+              "id": "task-android-permissions",
+              "title": "Configure Android permissions",
+              "type": "custom",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-network-permission",
+                  "action": "Add INTERNET permission for network connections",
+                  "details": "Required for SSH, RDP, Web connections",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-storage-permission",
+                  "action": "Add storage permissions for workspace files",
+                  "details": "READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE (or scoped storage)",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-notification-permission",
+                  "action": "Add notification permission (Android 13+)",
+                  "details": "For connection status notifications",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-android-features",
+              "title": "Implement Android-specific features",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-back-button",
+                  "action": "Handle Android back button",
+                  "details": "Implement back button navigation in QML",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-status-bar",
+                  "action": "Configure status bar styling",
+                  "details": "Set status bar color and theme to match app",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-file-picker",
+                  "action": "Integrate Android file picker",
+                  "details": "Use Qt.labs.platform FileDialog or native Android file picker",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestone-core-functionality",
+      "title": "Core Functionality Implementation",
+      "description": "Implement core workspace and connection management functionality",
+      "issues": [
+        {
+          "id": "issue-workspace-engine",
+          "title": "Workspace Engine Integration",
+          "description": "Integrate existing workspace engine from Node.js into Qt application",
+          "tasks": [
+            {
+              "id": "task-workspace-engine-port",
+              "title": "Port workspace engine to C++/Qt",
+              "type": "custom",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-workspace-parser",
+                  "action": "Create workspace.json parser",
+                  "details": "Parse .cursor/workspace.json and .cursor/state.json files",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-git-integration",
+                  "action": "Integrate Git operations",
+                  "details": "Use QProcess or libgit2 for git branch, commit, status operations",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-workspace-context",
+                  "action": "Build workspace runtime context",
+                  "details": "Replicate workspace-engine.js functionality in C++",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-workspace-operations",
+              "title": "Implement workspace operations",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-create-workspace",
+                  "action": "Implement workspace creation",
+                  "details": "Create workspace directory, initialize .cursor/ structure, generate workspace.json",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-switch-workspace",
+                  "action": "Implement workspace switching",
+                  "details": "Update current workspace, load workspace context, emit signals",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-list-workspaces",
+                  "action": "Implement workspace listing",
+                  "details": "Scan workspace directories, load metadata, return workspace list",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-connection-handlers",
+          "title": "Connection Handler Implementation",
+          "description": "Implement handlers for SSH, RDP, and Web connections",
+          "tasks": [
+            {
+              "id": "task-ssh-handler",
+              "title": "Implement SSH connection handler",
+              "type": "custom",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-ssh-client",
+                  "action": "Integrate SSH client library (libssh or QProcess with ssh command)",
+                  "details": "Use libssh for native SSH connections or QProcess for system ssh",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-ssh-connection",
+                  "action": "Implement SSH connection logic",
+                  "details": "Connect using host, port, username, key path; handle authentication",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-ssh-terminal",
+                  "action": "Create SSH terminal widget (optional)",
+                  "details": "QTerminalWidget or embedded terminal for SSH sessions",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-rdp-handler",
+              "title": "Implement RDP connection handler",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-rdp-client",
+                  "action": "Integrate RDP client (FreeRDP or system rdesktop)",
+                  "details": "Use FreeRDP library or launch system RDP client via QProcess",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-rdp-connection",
+                  "action": "Implement RDP connection logic",
+                  "details": "Launch RDP connection with host, port, username, domain",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-web-handler",
+              "title": "Implement Web connection handler",
+              "type": "custom",
+              "priority": 3,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-web-browser",
+                  "action": "Integrate web browser widget",
+                  "details": "Use QWebEngineView for embedded browser or launch system browser",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-web-navigation",
+                  "action": "Implement web navigation",
+                  "details": "Open URLs, handle navigation events, bookmark management",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-storage",
+          "title": "Data Storage Implementation",
+          "description": "Implement persistent storage for workspaces and connections",
+          "tasks": [
+            {
+              "id": "task-sqlite-storage",
+              "title": "Implement SQLite storage",
+              "type": "orm",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-database-init",
+                  "action": "Create SQLite database schema",
+                  "details": "Tables: workspaces, connections (ssh, rdp, web), settings",
+                  "type": "orm"
+                },
+                {
+                  "id": "subtask-database-access",
+                  "action": "Create database access layer",
+                  "details": "QSqlDatabase wrapper class for CRUD operations",
+                  "type": "orm"
+                },
+                {
+                  "id": "subtask-migrations",
+                  "action": "Implement database migrations",
+                  "details": "Version-based schema migration system",
+                  "type": "orm"
+                }
+              ]
+            },
+            {
+              "id": "task-config-storage",
+              "title": "Implement configuration file storage",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-settings-storage",
+                  "action": "Store application settings",
+                  "details": "Use QSettings for platform-specific settings storage",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-workspace-config",
+                  "action": "Store workspace configurations",
+                  "details": "Save workspace.json and state.json files in workspace directories",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestone-build-system",
+      "title": "Cross-Platform Build System",
+      "description": "Set up build system for all target platforms",
+      "issues": [
+        {
+          "id": "issue-cmake-config",
+          "title": "CMake Build Configuration",
+          "description": "Configure CMake for cross-platform builds",
+          "tasks": [
+            {
+              "id": "task-cmake-base",
+              "title": "Create base CMake configuration",
+              "type": "custom",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-cmake-modules",
+                  "action": "Configure Qt 6 modules and dependencies",
+                  "details": "Find Qt 6 packages: Core, Widgets, Network, QML, Quick, QuickControls2, Sql",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-cmake-platform",
+                  "action": "Add platform detection and configuration",
+                  "details": "Detect platform (Windows, Linux, macOS, Android) and set platform-specific options",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-cmake-install",
+                  "action": "Configure installation rules",
+                  "details": "Install targets, resources, platform-specific files",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-cmake-android",
+              "title": "Configure Android build",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-android-toolchain",
+                  "action": "Set up Android toolchain",
+                  "details": "Configure Android NDK, SDK paths, build tools",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-android-gradle",
+                  "action": "Configure Gradle build files",
+                  "details": "Create build.gradle, configure Android plugin, dependencies",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-android-manifest",
+                  "action": "Create AndroidManifest.xml",
+                  "details": "Configure package name, permissions, activities, services",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-packaging",
+          "title": "Application Packaging",
+          "description": "Create packaging scripts for all platforms",
+          "tasks": [
+            {
+              "id": "task-windows-package",
+              "title": "Create Windows installer",
+              "type": "custom",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-windows-nsis",
+                  "action": "Create NSIS installer script",
+                  "details": "Package application, create Start Menu shortcuts, add uninstaller",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-windows-windeployqt",
+                  "action": "Configure windeployqt for dependencies",
+                  "details": "Automatically bundle Qt DLLs and dependencies",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-macos-package",
+              "title": "Create macOS app bundle",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-macos-bundle",
+                  "action": "Configure macOS app bundle structure",
+                  "details": "Create .app bundle with Info.plist, resources, frameworks",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-macos-dmg",
+                  "action": "Create DMG installer script",
+                  "details": "Generate DMG file with application and Applications symlink",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-macos-codesign",
+                  "action": "Configure code signing (optional)",
+                  "details": "Set up code signing for distribution outside App Store",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-linux-package",
+              "title": "Create Linux packages",
+              "type": "custom",
+              "priority": 3,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-linux-appimage",
+                  "action": "Create AppImage build script",
+                  "details": "Package as AppImage with AppDir structure, AppRun script",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-linux-flatpak",
+                  "action": "Create Flatpak manifest",
+                  "details": "Create Flatpak manifest for distribution via Flathub",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-linux-deb",
+                  "action": "Create Debian package (optional)",
+                  "details": "Generate .deb package with debian/ directory structure",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-android-package",
+              "title": "Create Android APK/AAB",
+              "type": "custom",
+              "priority": 4,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-android-apk",
+                  "action": "Configure APK build",
+                  "details": "Build debug and release APKs with signing",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-android-aab",
+                  "action": "Configure AAB build (for Play Store)",
+                  "details": "Build Android App Bundle for Google Play Store distribution",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-android-signing",
+                  "action": "Configure APK signing",
+                  "details": "Set up keystore and signing configuration for release builds",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestone-testing",
+      "title": "Testing Infrastructure",
+      "description": "Set up testing framework and write tests",
+      "issues": [
+        {
+          "id": "issue-unit-tests",
+          "title": "Unit Tests",
+          "description": "Write unit tests for core functionality",
+          "tasks": [
+            {
+              "id": "task-test-framework",
+              "title": "Set up testing framework",
+              "type": "tdd",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-qt-test",
+                  "action": "Configure Qt Test framework",
+                  "details": "Set up Qt Test for C++ unit tests, create test project structure",
+                  "type": "tdd"
+                },
+                {
+                  "id": "subtask-test-structure",
+                  "action": "Create test directory structure",
+                  "details": "Organize tests by module: tests/unit/, tests/integration/, tests/ui/",
+                  "type": "tdd"
+                }
+              ]
+            },
+            {
+              "id": "task-model-tests",
+              "title": "Write model tests",
+              "type": "tdd",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-workspace-model-test",
+                  "action": "Test workspace model",
+                  "details": "Test workspace creation, serialization, validation",
+                  "type": "tdd"
+                },
+                {
+                  "id": "subtask-connection-model-test",
+                  "action": "Test connection models",
+                  "details": "Test SSH, RDP, Web model creation and validation",
+                  "type": "tdd"
+                }
+              ]
+            },
+            {
+              "id": "task-service-tests",
+              "title": "Write service tests",
+              "type": "tdd",
+              "priority": 3,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-workspace-service-test",
+                  "action": "Test workspace service",
+                  "details": "Test workspace CRUD operations, switching, listing",
+                  "type": "tdd"
+                },
+                {
+                  "id": "subtask-storage-service-test",
+                  "action": "Test storage service",
+                  "details": "Test database operations, configuration storage",
+                  "type": "tdd"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-ui-tests",
+          "title": "UI Tests",
+          "description": "Write UI tests for desktop and mobile interfaces",
+          "tasks": [
+            {
+              "id": "task-desktop-ui-tests",
+              "title": "Write desktop UI tests",
+              "type": "ui-tests",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-widget-tests",
+                  "action": "Test main window widgets",
+                  "details": "Test menu actions, toolbar buttons, workspace list interactions",
+                  "type": "ui-tests"
+                },
+                {
+                  "id": "subtask-dialog-tests",
+                  "action": "Test dialogs and forms",
+                  "details": "Test workspace creation dialog, connection forms, settings dialog",
+                  "type": "ui-tests"
+                }
+              ]
+            },
+            {
+              "id": "task-mobile-ui-tests",
+              "title": "Write mobile UI tests",
+              "type": "ui-tests",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-qml-tests",
+                  "action": "Test QML components",
+                  "details": "Test QML screens, navigation, forms using Qt Quick Test",
+                  "type": "ui-tests"
+                },
+                {
+                  "id": "subtask-android-integration-tests",
+                  "action": "Test Android integration",
+                  "details": "Test Android-specific features, permissions, file picker",
+                  "type": "ui-tests"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestone-documentation",
+      "title": "Documentation",
+      "description": "Create user and developer documentation",
+      "issues": [
+        {
+          "id": "issue-user-docs",
+          "title": "User Documentation",
+          "description": "Create user guides and help documentation",
+          "tasks": [
+            {
+              "id": "task-user-manual",
+              "title": "Write user manual",
+              "type": "custom",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-installation-guide",
+                  "action": "Write installation guide for all platforms",
+                  "details": "Step-by-step installation instructions for Windows, macOS, Linux, Android",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-getting-started",
+                  "action": "Write getting started guide",
+                  "details": "Quick start tutorial: creating first workspace, adding connections",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-feature-guides",
+                  "action": "Write feature guides",
+                  "details": "Guides for workspace management, connection management, settings",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-in-app-help",
+              "title": "Create in-app help",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-help-dialog",
+                  "action": "Add help dialog/widget",
+                  "details": "Help browser showing user documentation, keyboard shortcuts",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-tooltips",
+                  "action": "Add tooltips and hints",
+                  "details": "Tooltips for UI elements, status bar hints, context help",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "issue-dev-docs",
+          "title": "Developer Documentation",
+          "description": "Create developer documentation for building and contributing",
+          "tasks": [
+            {
+              "id": "task-build-docs",
+              "title": "Write build documentation",
+              "type": "custom",
+              "priority": 1,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-build-instructions",
+                  "action": "Document build process for all platforms",
+                  "details": "Prerequisites, CMake configuration, build commands, troubleshooting",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-contribution-guide",
+                  "action": "Write contribution guide",
+                  "details": "Code style, git workflow, pull request process, testing requirements",
+                  "type": "custom"
+                }
+              ]
+            },
+            {
+              "id": "task-api-docs",
+              "title": "Generate API documentation",
+              "type": "custom",
+              "priority": 2,
+              "status": "pending",
+              "subtasks": [
+                {
+                  "id": "subtask-doxygen",
+                  "action": "Configure Doxygen for C++ API docs",
+                  "details": "Generate API documentation from code comments",
+                  "type": "custom"
+                },
+                {
+                  "id": "subtask-architecture-docs",
+                  "action": "Write architecture documentation",
+                  "details": "Document application architecture, module structure, design patterns",
+                  "type": "custom"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
