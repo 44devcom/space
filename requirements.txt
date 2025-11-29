@@ -2,4 +2,7 @@ fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
 pydantic>=2.5.0
 pydantic[email]>=2.5.0
+PySide6>=6.6.0
+dnspython>=2.4.0
+requests>=2.31.0
 
