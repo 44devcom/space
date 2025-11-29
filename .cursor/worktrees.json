@@ -144,5 +144,62 @@
       "npm install || yarn install",
       "cp $ROOT_WORKTREE_PATH/.env .env || true"
     ]
+  },
+
+  "android": {
+    "stack": "android",
+    "language": "kotlin",
+    "root": ".",
+    "src": "app/src/main",
+    "java": "app/src/main/java",
+    "kotlin": "app/src/main/kotlin",
+    "res": "app/src/main/res",
+    "assets": "app/src/main/assets",
+    "manifest": "app/src/main/AndroidManifest.xml",
+    "build": "app/build",
+    "output": "app/build/outputs/apk",
+    "native": "app/src/main/jniLibs",
+
+    "domain": {
+      "entities": "app/src/main/kotlin/domain/entities",
+      "repositories": "app/src/main/kotlin/domain/repositories",
+      "useCases": "app/src/main/kotlin/domain/useCases"
+    },
+
+    "presentation": {
+      "activities": "app/src/main/kotlin/presentation/activities",
+      "fragments": "app/src/main/kotlin/presentation/fragments",
+      "viewModels": "app/src/main/kotlin/presentation/viewModels",
+      "adapters": "app/src/main/kotlin/presentation/adapters",
+      "ui": "app/src/main/res/layout"
+    },
+
+    "data": {
+      "repositories": "app/src/main/kotlin/data/repositories",
+      "datasources": "app/src/main/kotlin/data/datasources",
+      "local": "app/src/main/kotlin/data/local",
+      "remote": "app/src/main/kotlin/data/remote",
+      "models": "app/src/main/kotlin/data/models"
+    },
+
+    "tests": {
+      "unit": "app/src/test/kotlin",
+      "androidTest": "app/src/androidTest/kotlin",
+      "instrumented": "app/src/androidTest/kotlin"
+    },
+
+    "docker": {
+      "root": "docker",
+      "compose": "docker/docker-compose.yml",
+      "env": ".env",
+      "services": "docker/services",
+      "android": "docker/android"
+    },
+
+    "setup-worktree": [
+      "./gradlew --version || true",
+      "cp $ROOT_WORKTREE_PATH/local.properties local.properties || true",
+      "cp $ROOT_WORKTREE_PATH/.env .env || true"
+    ]
   }
 }
