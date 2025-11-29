@@ -1,0 +1,124 @@
+# Build directories
+build/
+app/build/
+*/build/
+**/build/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Qt generated files
+*_autogen/
+ui_*.h
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+*.moc
+
+# Compiled Object files
+*.o
+*.obj
+*.lo
+*.slo
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+FancyApp
+*.exe
+*.out
+*.app
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+*.qmlc
+*.jsc
+*.autosave
+
+# Qt Designer
+*.ui.bak
+*.ui~
+
+# IDE - Visual Studio Code
+.vscode/
+*.code-workspace
+
+# IDE - CLion
+.idea/
+cmake-build-*/
+
+# IDE - Qt Creator
+*.creator
+*.creator.user
+*.creator.user.*
+*.includes
+*.files
+*.config
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Core dumps
+core
+core.*
+
+# Temporary files
+*~
+*.swp
+*.swo
+*.tmp
+*.bak
+*.cache
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Coverage reports
+*.gcov
+*.gcda
+*.gcno
+
+# Valgrind
+valgrind-out.*
+
+# Package files
+*.deb
+*.rpm
+*.tar.gz
+*.zip
