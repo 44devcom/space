@@ -1,0 +1,371 @@
+---
+alwaysApply: true
+---
+
+# Chrome Extension Docker Build Service
+
+## Purpose
+
+Dockerized environment for building, packaging, and testing Chrome extensions with support for TypeScript, bundling, and automated testing.
+
+## Image Options
+
+### Option 1: Node.js Base Image
+- `node:20-alpine` or `node:20-slim`
+- Includes: Node.js, npm/yarn
+- Lightweight for extension builds
+
+### Option 2: Custom Extension Builder
+- Base: `node:20-bullseye`
+- Includes:
+  - Node.js 20+
+  - npm/yarn/pnpm
+  - Chrome/Chromium (for testing)
+  - Webpack/Vite
+  - TypeScript compiler
+  - Extension packaging tools
+
+## Directory Structure
+
+```
+/app
+├── manifest.json
+├── package.json
+├── tsconfig.json
+├── webpack.config.js
+├── src/
+│   ├── background/
+│   │   └── service-worker.ts
+│   ├── content/
+│   │   └── content-script.ts
+│   ├── popup/
+│   │   ├── popup.html
+│   │   ├── popup.ts
+│   │   └── popup.css
+│   ├── options/
+│   │   ├── options.html
+│   │   ├── options.ts
+│   │   └── options.css
+│   └── shared/
+│       └── utils.ts
+├── public/
+│   ├── icons/
+│   │   ├── icon16.png
+│   │   ├── icon48.png
+│   │   └── icon128.png
+│   └── images/
+├── build/
+│   └── (compiled output)
+└── dist/
+    └── (packaged extension)
+```
+
+## Build Steps
+
+1. **Install Dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   ```
+
+2. **TypeScript Compilation** (if using TypeScript)
+   ```bash
+   npx tsc --noEmit  # Type check
+   ```
+
+3. **Build Extension**
+   ```bash
+   npm run build
+   # or
+   webpack --mode production
+   # or
+   vite build
+   ```
+
+4. **Package Extension**
+   ```bash
+   # Create ZIP for Chrome Web Store
+   cd dist
+   zip -r ../extension.zip .
+   ```
+
+## Build Tools
+
+### Webpack
+```javascript
+// webpack.config.js
+const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+module.exports = {
+  mode: 'production',
+  entry: {
+    'background/service-worker': './src/background/service-worker.ts',
+    'content/content-script': './src/content/content-script.ts',
+    'popup/popup': './src/popup/popup.ts',
+  },
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: '[name].js',
+  },
+  module: {
+    rules: [
+      { test: /\.ts$/, use: 'ts-loader' },
+      { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+    ],
+  },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'manifest.json' },
+        { from: 'src/popup/popup.html', to: 'popup/popup.html' },
+        { from: 'public', to: '.' },
+      ],
+    }),
+  ],
+};
+```
+
+### Vite
+```javascript
+// vite.config.js
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+
+export default defineConfig({
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      input: {
+        'background/service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
+        'content/content-script': resolve(__dirname, 'src/content/content-script.ts'),
+        'popup/popup': resolve(__dirname, 'src/popup/popup.ts'),
+      },
+      output: {
+        entryFileNames: '[name].js',
+      },
+    },
+  },
+});
+```
+
+## Environment Variables
+
+```bash
+NODE_ENV=production
+EXTENSION_NAME=MyExtension
+EXTENSION_VERSION=1.0.0
+BUILD_TOOL=webpack          # webpack, vite, or none
+ENABLE_SOURCEMAPS=false     # Enable source maps for debugging
+MINIFY=true                 # Minify output
+```
+
+## Docker Compose Service Example
+
+```yaml
+services:
+  chrome-extension-builder:
+    build:
+      context: .
+      dockerfile: docker/chrome/Dockerfile
+    container_name: chrome-extension-builder
+    environment:
+      NODE_ENV: production
+      EXTENSION_NAME: MyExtension
+      EXTENSION_VERSION: 1.0.0
+      BUILD_TOOL: webpack
+    volumes:
+      - ./extensions/chrome:/app:ro
+      - ./extensions/chrome/dist:/app/dist
+      - ./installers:/app/installers
+    command: >
+      sh -c "
+        cd /app &&
+        npm install &&
+        npm run build &&
+        cd dist &&
+        zip -r /app/installers/extension.zip . &&
+        echo 'Extension packaged: /app/installers/extension.zip'
+      "
+```
+
+## Testing
+
+### Unit Tests
+```bash
+# Install test dependencies
+npm install --save-dev jest @types/jest ts-jest
+
+# Run tests
+npm test
+```
+
+### E2E Tests with Puppeteer
+```bash
+# Install Puppeteer
+npm install --save-dev puppeteer @types/puppeteer
+
+# Run E2E tests
+npm run test:e2e
+```
+
+### Extension Testing Service
+```yaml
+services:
+  chrome-extension-tester:
+    image: mcr.microsoft.com/playwright:v1.40.0-focal
+    volumes:
+      - ./extensions/chrome/dist:/app/extension:ro
+      - ./tests/chrome:/app/tests:ro
+      - ./reports:/app/reports
+    command: >
+      sh -c "
+        npm install -g @puppeteer/browsers &&
+        npx playwright install chromium &&
+        npm test
+      "
+```
+
+## Packaging
+
+### Create ZIP for Chrome Web Store
+```bash
+# Package extension
+cd dist
+zip -r ../extension.zip . -x "*.map" "*.ts"
+
+# Or with version in filename
+zip -r ../extension-${VERSION}.zip . -x "*.map" "*.ts"
+```
+
+### Validate Extension
+```bash
+# Install Chrome extension validator
+npm install -g chrome-extension-validator
+
+# Validate extension
+chrome-extension-validator dist/
+```
+
+## Dockerfile Example
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install build tools
+RUN apk add --no-cache zip
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci --only=production=false
+
+# Copy source
+COPY . .
+
+# Build extension
+RUN npm run build
+
+# Package extension
+RUN cd dist && zip -r ../extension.zip . -x "*.map" "*.ts"
+
+# Output
+VOLUME ["/app/installers"]
+CMD ["sh", "-c", "cp extension.zip /app/installers/ && echo 'Extension packaged successfully'"]
+```
+
+## Healthcheck
+
+```yaml
+healthcheck:
+  test: ["CMD", "test", "-f", "/app/installers/extension.zip"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+```
+
+## Deployment
+
+### Load Extension in Chrome (Development)
+```bash
+# Extract extension to host
+docker compose cp chrome-extension-builder:/app/dist ./extension-dist
+
+# Load in Chrome:
+# 1. Open chrome://extensions/
+# 2. Enable "Developer mode"
+# 3. Click "Load unpacked"
+# 4. Select extension-dist directory
+```
+
+### Publish to Chrome Web Store
+```bash
+# Extract ZIP
+docker compose cp chrome-extension-builder:/app/installers/extension.zip ./extension.zip
+
+# Upload to Chrome Web Store Developer Dashboard:
+# https://chrome.google.com/webstore/devconsole
+```
+
+### Automated Publishing
+```yaml
+services:
+  chrome-extension-publisher:
+    image: node:20-alpine
+    volumes:
+      - ./installers:/app/installers:ro
+    environment:
+      CHROME_WEB_STORE_CLIENT_ID: ${CHROME_WEB_STORE_CLIENT_ID}
+      CHROME_WEB_STORE_CLIENT_SECRET: ${CHROME_WEB_STORE_CLIENT_SECRET}
+      CHROME_WEB_STORE_REFRESH_TOKEN: ${CHROME_WEB_STORE_REFRESH_TOKEN}
+    command: >
+      sh -c "
+        npm install -g chrome-web-store-upload-cli &&
+        chrome-web-store upload \
+          --file /app/installers/extension.zip \
+          --client-id $${CHROME_WEB_STORE_CLIENT_ID} \
+          --client-secret $${CHROME_WEB_STORE_CLIENT_SECRET} \
+          --refresh-token $${CHROME_WEB_STORE_REFRESH_TOKEN}
+      "
+```
+
+## Notes
+
+- **Manifest V3**: Use Manifest V3 (recommended) unless legacy support needed
+- **TypeScript**: TypeScript support with @types/chrome for type safety
+- **Bundling**: Webpack or Vite for code bundling and optimization
+- **Source Maps**: Disable in production builds for smaller package size
+- **Minification**: Enable minification for production builds
+- **Testing**: Use Puppeteer/Playwright for E2E testing
+- **Validation**: Validate extension before publishing
+- **Versioning**: Include version in package filename
+- **Icons**: Ensure all required icon sizes are present (16, 48, 128)
+
+## Troubleshooting
+
+### Build Fails
+- Check Node.js version compatibility
+- Verify all dependencies are installed
+- Check TypeScript configuration
+- Ensure manifest.json is valid
+
+### Extension Not Loading
+- Check manifest.json syntax
+- Verify all referenced files exist
+- Check browser console for errors
+- Ensure permissions are correctly set
+
+### TypeScript Errors
+- Verify @types/chrome is installed
+- Check tsconfig.json configuration
+- Ensure Chrome API types are imported
+
+### Packaging Issues
+- Ensure dist/ directory contains all files
+- Check for missing assets (icons, images)
+- Verify manifest.json is in dist/
+- Remove source maps from production build
