@@ -1,0 +1,968 @@
+---
+alwaysApply: false
+---
+
+# Qt C++ Development Rules
+
+## Purpose
+
+Define rules and conventions for Qt C++ desktop application development, including project structure, naming conventions, MVC patterns, UI design, and component integration.
+
+---
+
+## 1. Project Structure
+
+### Standard Directory Layout
+
+```
+project/
+└── app/
+    ├── main.cpp
+    ├── CMakeLists.txt
+    ├── defaults.json
+    ├── connections.json
+    ├── models/
+    │   ├── settings_model.cpp
+    │   ├── settings_model.h
+    │   ├── connection_model.cpp
+    │   └── connection_model.h
+    ├── controllers/
+    │   ├── settings_controller.cpp
+    │   ├── settings_controller.h
+    │   ├── connection_controller.cpp
+    │   ├── connection_controller.h
+    │   └── systray_controller.cpp
+    │   └── systray_controller.h
+    ├── views/
+    │   ├── main_window.cpp
+    │   ├── main_window.h
+    │   ├── main_window.ui
+    │   ├── main_toolbar.ui
+    │   ├── main_toolbar_form.ui
+    │   ├── main_statusbar.ui
+    │   ├── settings_view.cpp
+    │   ├── settings_view.h
+    │   ├── settings_view.ui
+    │   ├── connection_view.cpp
+    │   ├── connection_view.h
+    │   └── connection_view.ui
+    └── services/
+        └── secret_service/
+            ├── secret.h
+            ├── secret.cpp
+            ├── service_secrets.h
+            ├── service_secrets.cpp
+            ├── secret_repository.h
+            ├── secret_repository.cpp
+            ├── secret_factory.h
+            ├── secret_factory.cpp
+            ├── seeder.h
+            ├── seeder.cpp
+            ├── migration_manager.h
+            ├── migration_manager.cpp
+            ├── secret_service.h
+            └── secret_service.cpp
+```
+
+---
+
+## 2. Naming Conventions
+
+### Classes
+- **CamelCase**, descriptive, clear
+- Examples: `InitMainWindow`, `SettingsDialog`, `UserForm`, `SecretService`
+
+### Widgets (instance names)
+- **snake_case** with widget type prefix
+- Examples: 
+  - `label_status`
+  - `button_save`
+  - `lineedit_username`
+  - `combobox_options`
+  - `progressbar_status`
+  - `table_connections`
+
+### Actions
+- Format: `action_<verb>`
+- Examples: `action_exit`, `action_save`, `action_open_file`, `action_settings`
+
+### Slots (manual + Designer auto-connected)
+- Format: `on_<sendername>_<signal>()`
+- Examples:
+  - `on_button_save_clicked()`
+  - `on_action_exit_triggered()`
+  - `on_lineedit_username_textChanged()`
+  - `on_combobox_language_currentIndexChanged()`
+
+### Variables inside Slots
+- Use **snake_case**, descriptive, meaningful
+- Examples: `current_index`, `user_input`, `file_path`
+
+### General Guidelines
+- No abbreviations
+- Signals unique per class
+- Consistency across all files
+
+---
+
+## 3. CMake Configuration
+
+### Standard CMakeLists.txt Template
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(MyApp VERSION 0.1 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Core)
+
+set(SOURCES
+    main.cpp
+    views/main_window.cpp
+    views/main_window.h
+    views/main_window.ui
+    # Add all other source files here
+)
+
+qt_add_executable(MyApp ${SOURCES})
+target_link_libraries(MyApp PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Core)
+```
+
+### UI File Processing
+- `.ui` files are automatically processed by CMake's `CMAKE_AUTOUIC`
+- Generates `ui_<filename>.h` that should be included in corresponding header files
+- Example: `ui_main_window.h` included in `main_window.h`
+
+---
+
+## 4. UI File Specifications
+
+### Main Window (`main_window.ui`)
+
+- **Base widget:** `QMainWindow`
+- **Object name:** `MainWindow`
+- **Central widget:** `QWidget` with objectName `central_widget`
+- **Layout:** `QVBoxLayout`
+- **Menu bar:** 
+  - Object name: `menubar`
+  - Menu: `menu_file` → contains `action_exit`
+- **Toolbar:** 
+  - Object name: `toolbar_main`
+  - Contains promoted widget from `main_toolbar.ui` or `main_toolbar_form.ui`
+- **Status bar:** Embedded via `main_statusbar.ui`
+
+### Toolbar (`main_toolbar_form.ui`)
+
+- **Base widget:** `QWidget`
+- **Object name:** `main_toolbar_form`
+- **Layout:** `QHBoxLayout`
+- **Margins:** 6 px
+- **Spacing:** 4 px
+- **Minimum height:** 40 px
+- **Size policy:** Expanding width, Fixed height
+
+**Widgets (left → right):**
+1. `button_new` (QPushButton, icon: SP_FileIcon)
+2. `button_open` (QPushButton, icon: SP_DirOpenIcon)
+3. `button_save` (QPushButton, icon: SP_DialogSaveButton)
+4. `frame_separator` (QFrame, VLine)
+5. `button_refresh` (QPushButton, icon: SP_BrowserReload)
+6. QSpacerItem (expanding)
+7. `label_language` (QLabel, text: "Language:")
+8. `combobox_language` (QComboBox, items: English (en), Magyar (hu))
+
+**Button properties:**
+- flat = true
+- iconSize = 24x24
+- layout alignment = left
+
+### Status Bar (`main_statusbar.ui`)
+
+- **Base widget:** `QWidget`
+- **Object name:** `main_statusbar`
+- **Layout:** `QHBoxLayout`
+- **Margins:** 4 px
+- **Spacing:** 6 px
+- **Minimum height:** 28 px
+
+**Widgets (left → right):**
+1. `label_status` (QLabel, text: "Ready", expanding)
+2. `progressbar_status` (QProgressBar, fixed width 150px, hidden by default)
+3. QSpacerItem (expanding)
+4. `label_datetime` (QLabel, monospace, fixed width 80px)
+5. `label_language_status` (QLabel, fixed width 40px, box frame)
+
+### Settings Dialog (`settings_view.ui`)
+
+- **Base widget:** `QDialog`
+- **Object name:** `settings_dialog`
+- **Window title:** Settings
+- **Layout:** `QVBoxLayout`
+- **Minimum size:** 320x220
+
+**Layout hierarchy:**
+```
+Root Layout → QVBoxLayout
+├── QTabWidget (objectName: tabwidget_settings)
+│   ├── Tab 1: General
+│   │   └── QFormLayout (objectName: formlayout_general)
+│   │       ├── Theme → combobox_theme (Light, Dark)
+│   │       ├── Language → combobox_language (English (en), Hungarian (hu))
+│   │       ├── Load settings on startup → checkbox_autoload
+│   │       └── Enable notifications → checkbox_notifications
+│   ├── Tab 2: Connections
+│   │   └── Embedded connection_view.ui
+│   └── Tab 3: Advanced (optional)
+└── QDialogButtonBox (objectName: buttonbox_settings)
+    └── Standard buttons: Save | Cancel
+```
+
+### Connection View (`connection_view.ui`)
+
+- **Base widget:** `QWidget`
+- **Object name:** `connection_form`
+- **Layout:** `QVBoxLayout`
+- **Purpose:** Embedded in Settings dialog "Connections" tab
+
+**Layout hierarchy:**
+```
+Root Layout → QVBoxLayout
+├── QGroupBox — "Connection Details"
+│   └── QFormLayout
+│       ├── Connection Type → combobox_connection_type (FTP, SQL)
+│       ├── Host → lineedit_host
+│       ├── Port → lineedit_port
+│       ├── Username → lineedit_username
+│       └── Password → lineedit_password (echo mode: Password)
+├── QHBoxLayout — action buttons
+│   ├── button_test_connection
+│   ├── button_save_connection
+│   └── button_remove_connection
+├── QTableWidget (objectName: table_connections)
+│   └── Columns: Type, Host, Port, Username
+└── QSpacerItem
+```
+
+---
+
+## 5. MVC Pattern Implementation
+
+### Model Layer
+
+**Purpose:** Data persistence and business logic
+
+**Structure:**
+- Models read/write JSON files
+- Auto-create files if missing with defaults
+- Expose `get()` and `set()` methods
+- Handle data validation
+
+**Example: SettingsModel**
+- File: `defaults.json`
+- Methods: `getTheme()`, `setTheme()`, `getLanguage()`, `setLanguage()`, etc.
+- Auto-creates JSON with defaults if missing
+
+**Example: ConnectionModel**
+- File: `connections.json`
+- Methods: `list_connections()`, `add_connection()`, `update_connection()`, `remove_connection()`
+- Returns data in safe dictionary form (hide passwords by default)
+
+### Controller Layer
+
+**Purpose:** Mediate between View and Model
+
+**Structure:**
+- Load model at startup
+- Populate view with saved values
+- Connect signals from view (save/cancel)
+- Write changes back via model
+- Handle business logic (e.g., test connections)
+
+**Example: SettingsController**
+- Initializes SettingsModel and SettingsView
+- Connects view signals to model methods
+- Handles save/cancel actions
+
+**Example: ConnectionController**
+- Initializes ConnectionModel and ConnectionView
+- Populates `table_connections` with stored entries
+- Handles "Test Connection" (FTP via Qt network, SQL via QSqlDatabase)
+- Displays success/failure via QMessageBox
+
+### View Layer
+
+**Purpose:** UI presentation
+
+**Structure:**
+- Includes auto-generated `ui_<filename>.h` from `.ui` file
+- Exposes custom signals (e.g., `signal_save_settings`, `signal_cancel_settings`)
+- Provides helper methods (e.g., `get_selected_theme()`, `get_selected_language()`)
+- Handles UI state and user input
+
+---
+
+## 6. System Tray Integration
+
+### Requirements
+
+- Implement `QSystemTrayIcon` in `main.cpp` or dedicated controller
+- Use icon (default Qt icon if none available)
+- Add `QMenu` to tray icon with:
+  - `Show/Hide` → toggle main window visibility
+  - `Exit` → trigger `action_exit`
+
+### Behavior
+
+- Left-click tray icon → toggle main window visibility
+- When main window is closed, **hide to tray instead of quitting**
+- Application quits only when:
+  - "Exit" action is triggered from menu, or
+  - `action_exit` from File → Exit is triggered
+
+### Implementation
+
+- Keep systray logic in `app/controllers/systray_controller.cpp` and `systray_controller.h`
+- Reuse `action_exit` from UI menu
+- Ensure signals and slots follow naming rules (`on_<sender>_<signal>`)
+
+---
+
+## 7. Secret Service Module
+
+### Purpose
+
+Centralized secret management system with in-memory storage, master password protection, and encryption using Qt's cryptographic classes.
+
+### Structure
+
+```
+app/services/secret_service/
+├── secret.h / secret.cpp
+├── service_secrets.h / service_secrets.cpp
+├── secret_repository.h / secret_repository.cpp
+├── secret_factory.h / secret_factory.cpp
+├── seeder.h / seeder.cpp
+├── migration_manager.h / migration_manager.cpp
+└── secret_service.h / secret_service.cpp
+```
+
+### Classes
+
+**Secret**
+- Properties: `name`, `value` (QByteArray), `type`, `createdAt`, `updatedAt`
+
+**ServiceSecrets**
+- Properties: `serviceName`, `secrets` (QMap<QString, Secret>), `createdAt`, `updatedAt`
+
+**SecretRepository**
+- Methods: `createSecret()`, `readSecret()`, `updateSecret()`, `deleteSecret()`, `listServices()`, `getServiceSecrets()`, `clearAll()`
+
+**SecretFactory**
+- Static methods: `createSecret()`, `createPasswordSecret()`, `createTokenSecret()`
+
+**Seeder**
+- Methods: `seedSampleData()`, `seedCustomData()`
+
+**MigrationManager**
+- Methods: `initialize()`, `reset()`, `resetAndSeed()`
+
+**SecretService** (Singleton)
+- Methods: `getInstance()`, `resetInstance()`, `authenticate()`, `createSecret()`, `readSecret()`, `updateSecret()`, `deleteSecret()`, `listServices()`, `isAuthenticated()`, `logout()`
+- Properties: `expiryMinutes` (default: 5)
+
+### Encryption
+
+- Use `QCryptographicHash` with SHA-256 for password hashing
+- Use `QCA` (Qt Cryptographic Architecture) or `QAESEncryption` for AES encryption
+- Use `QRandomGenerator` for generating salts
+- All timestamps use `qint64` (milliseconds since epoch) or `QDateTime`
+- Use `QByteArray` for binary data (encrypted values)
+- Use `QString` for text data
+- Use `QVariant` for flexible value types
+
+### CMake Dependencies
+
+```cmake
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS 
+    Widgets 
+    Core
+)
+```
+
+---
+
+## 8. Integration Rules
+
+### main.cpp Structure
+
+1. Initialize QApplication
+2. Load settings (SettingsController) before other components
+3. Initialize language translator (if settings loaded)
+4. Initialize System Tray (if needed)
+5. Create and show main window
+6. Connect signals/slots
+7. Execute application event loop
+
+### Signal/Slot Connections
+
+- Use Designer auto-connections where possible (naming: `on_<sender>_<signal>`)
+- Manual connections in controller constructors
+- Connect view signals to controller slots
+- Connect controller signals to model methods
+
+### File Persistence
+
+- JSON files auto-created if missing
+- Default values provided in model constructors
+- Save on explicit user action (Save button)
+- Load on application startup
+
+---
+
+## 9. Build & Verification
+
+### Build Commands
+
+```bash
+mkdir -p build
+cd build
+cmake ..
+make
+./MyApp
+```
+
+### Verification Checklist
+
+- [ ] All `.ui` files open correctly in Qt Designer
+- [ ] CMake builds without errors
+- [ ] Application launches successfully
+- [ ] System tray icon visible (if implemented)
+- [ ] Settings dialog opens and displays values
+- [ ] Settings persist across app restarts
+- [ ] Connections can be added/removed/edited
+- [ ] Test Connection validates credentials
+- [ ] Language switcher updates UI
+- [ ] Status bar displays correct information
+- [ ] Toolbar buttons are functional
+
+---
+
+## 10. Best Practices
+
+### Code Organization
+
+- Keep UI logic in views
+- Keep business logic in controllers
+- Keep data access in models
+- Use services for cross-cutting concerns (e.g., secrets)
+
+### Memory Management
+
+- Use Qt's parent-child relationship for automatic cleanup
+- Use smart pointers (`QSharedPointer`, `QScopedPointer`) when appropriate
+- Avoid raw pointers for owned objects
+
+### Thread Safety
+
+- Consider `QMutex` if services accessed from multiple threads
+- Use `QThread` for long-running operations
+- Never access UI from worker threads (use signals)
+
+### Translation
+
+- Wrap all user-visible strings in `tr()` calls
+- Use `.ts` files for translations
+- Support language switching at runtime
+
+### Error Handling
+
+- Use `QMessageBox` for user-facing errors
+- Log errors to console or file
+- Validate input before processing
+- Handle file I/O errors gracefully
+
+---
+
+## 11. UI Design Guidelines
+
+### Layouts
+
+- Use `QFormLayout` for form fields
+- Use `QVBoxLayout` for dialog structure (tabs + buttons)
+- Use `QHBoxLayout` for horizontal toolbars
+- Use `QSpacerItem` for alignment
+
+### Widgets
+
+- Use appropriate widget types (QComboBox for selections, QLineEdit for text, etc.)
+- Set tooltips for all interactive elements
+- Use icons from `QStyle::StandardPixmap` where possible
+- Set minimum sizes for dialogs
+
+### Visual Style
+
+- Consistent margins and spacing (4-6 px typical)
+- Flat button style for toolbars
+- Monospace fonts for technical data (timestamps, etc.)
+- Frame shapes for visual separation (QFrame::VLine, QFrame::Box)
+
+---
+
+## 12. Create View Commands
+
+### Purpose
+
+Two commands are available for generating Qt C++ view components:
+
+1. **`create-view`** - Quick, simple view generation (basic QDialog with form layout)
+2. **`create-view-agent`** - Advanced view generation with full customization options
+
+Both commands follow Qt C++ MVC conventions and project structure.
+
+### Usage
+
+**Simple Command:**
+```
+/create-view <view_name>
+```
+- Generates basic QDialog with QFormLayout
+- Quick setup for simple forms
+- No options needed
+
+**Advanced Agent:**
+```
+/create-view-agent <view_name> [options]
+```
+- Supports all view types (window, dialog, widget, page, dock)
+- Custom layouts (form, vertical, horizontal, grid, tabs)
+- Optional MVC pattern (controller + model)
+- Full customization options
+
+### When to Use Which Command
+
+**Use `create-view` when:**
+- ✅ You need a quick dialog/form
+- ✅ Simple QDialog with form layout is sufficient
+- ✅ No custom view type or layout needed
+- ✅ Rapid prototyping
+
+**Use `create-view-agent` when:**
+- ⚙️ You need QMainWindow, QWidget, or QDockWidget
+- ⚙️ Custom layout required (grid, tabs, horizontal)
+- ⚙️ MVC pattern needed (controller + model)
+- ⚙️ Complex widget requirements
+- ⚙️ Advanced customization
+
+### View Types
+
+The agent supports creating:
+
+- **Windows** (`QMainWindow`) - Main application windows
+- **Dialogs** (`QDialog`) - Modal dialogs (settings, preferences, forms)
+- **Widgets** (`QWidget`) - Embedded widgets (toolbars, status bars, forms)
+- **Pages** (`QWidget` with `QStackedWidget`) - Multi-page views
+- **Dock Widgets** (`QDockWidget`) - Dockable panels
+
+### Generated Files
+
+For each view, the agent generates:
+
+1. **Header file** (`views/<view_name>_view.h`)
+2. **Implementation file** (`views/<view_name>_view.cpp`)
+3. **UI file** (`views/<view_name>_view.ui`)
+4. **Optional:** Controller (`controllers/<view_name>_controller.h/cpp`)
+5. **Optional:** Model (`models/<view_name>_model.h/cpp`)
+
+### View Template Structure
+
+#### Header File Template (`<view_name>_view.h`)
+
+```cpp
+#ifndef <VIEW_NAME>_VIEW_H
+#define <VIEW_NAME>_VIEW_H
+
+#include <QWidget>
+#include <QDialog>  // or QMainWindow, QDockWidget
+#include "ui_<view_name>_view.h"
+
+class <ViewName>View : public QDialog  // or QMainWindow, QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit <ViewName>View(QWidget *parent = nullptr);
+    ~<ViewName>View();
+
+    // Public getter methods
+    QString get_selected_value() const;
+    bool get_checkbox_state() const;
+
+signals:
+    void signal_save_<view_name>();
+    void signal_cancel_<view_name>();
+    void signal_<action_name>();
+
+private slots:
+    void on_button_save_clicked();
+    void on_button_cancel_clicked();
+    void on_<widget_name>_<signal>();
+
+private:
+    Ui::<ViewName>View *ui;
+    void setup_connections();
+    void load_defaults();
+};
+
+#endif // <VIEW_NAME>_VIEW_H
+```
+
+#### Implementation File Template (`<view_name>_view.cpp`)
+
+```cpp
+#include "<view_name>_view.h"
+#include <QMessageBox>
+
+<ViewName>View::<ViewName>View(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::<ViewName>View)
+{
+    ui->setupUi(this);
+    setup_connections();
+    load_defaults();
+}
+
+<ViewName>View::~<ViewName>View()
+{
+    delete ui;
+}
+
+void <ViewName>View::setup_connections()
+{
+    // Manual signal/slot connections if needed
+    // Auto-connections handled by naming convention
+}
+
+void <ViewName>View::load_defaults()
+{
+    // Initialize UI with default values
+}
+
+QString <ViewName>View::get_selected_value() const
+{
+    return ui->combobox_field->currentText();
+}
+
+bool <ViewName>View::get_checkbox_state() const
+{
+    return ui->checkbox_field->isChecked();
+}
+
+void <ViewName>View::on_button_save_clicked()
+{
+    emit signal_save_<view_name>();
+    accept();
+}
+
+void <ViewName>View::on_button_cancel_clicked()
+{
+    emit signal_cancel_<view_name>();
+    reject();
+}
+```
+
+#### UI File Template (`<view_name>_view.ui`)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class><ViewName>View</class>
+ <widget class="QDialog" name="<view_name>_dialog">
+  <property name="windowTitle">
+   <string><View Title></string>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>320</width>
+    <height>220</height>
+   </size>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QWidget" name="content_widget">
+     <layout class="QFormLayout" name="formlayout_main">
+      <!-- Form fields here -->
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonbox_<view_name>">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+```
+
+### Agent Behavior
+
+#### create-view-agent
+
+The intelligent agent:
+
+1. **Analyzes requirements** from user query
+2. **Determines view type** (dialog, window, widget)
+3. **Generates appropriate layout** (form, vertical, horizontal, tabs)
+4. **Creates widget structure** based on described functionality
+5. **Adds standard signals/slots** following naming conventions
+6. **Includes CMakeLists.txt updates** automatically
+7. **Generates controller/model** if MVC pattern needed
+
+#### create-view
+
+The basic command:
+
+1. **Creates minimal view** with standard structure
+2. **Uses default layout** (QVBoxLayout with QFormLayout)
+3. **Includes basic save/cancel** buttons
+4. **Follows naming conventions** strictly
+
+### View Generation Rules
+
+#### Widget Naming
+
+- **Object names:** `snake_case` with type prefix
+  - `button_save`, `button_cancel`
+  - `lineedit_username`, `lineedit_password`
+  - `combobox_language`, `combobox_theme`
+  - `checkbox_enable`, `checkbox_autoload`
+  - `table_data`, `list_items`
+  - `label_status`, `label_title`
+
+#### Layout Selection
+
+- **QFormLayout:** Forms with labels and inputs
+- **QVBoxLayout:** Vertical stacking (dialogs, main windows)
+- **QHBoxLayout:** Horizontal toolbars, button rows
+- **QGridLayout:** Complex grid arrangements
+- **QTabWidget:** Multi-tab interfaces
+
+#### Signal/Slot Naming
+
+- **Slots:** `on_<widget_name>_<signal>()`
+  - `on_button_save_clicked()`
+  - `on_combobox_language_currentIndexChanged()`
+  - `on_lineedit_username_textChanged()`
+- **Signals:** `signal_<action_name>()`
+  - `signal_save_settings()`
+  - `signal_cancel_dialog()`
+  - `signal_data_changed()`
+
+### Common View Patterns
+
+#### Settings Dialog Pattern
+
+```cpp
+// Base: QDialog
+// Layout: QVBoxLayout → QTabWidget → QFormLayout
+// Buttons: QDialogButtonBox (Save | Cancel)
+// Fields: combobox_theme, combobox_language, checkbox_*
+```
+
+#### Form Widget Pattern
+
+```cpp
+// Base: QWidget
+// Layout: QVBoxLayout → QFormLayout
+// Purpose: Embedded in parent view
+// Fields: lineedit_*, combobox_*, checkbox_*
+```
+
+#### Main Window Pattern
+
+```cpp
+// Base: QMainWindow
+// Layout: Central widget with QVBoxLayout
+// Components: menubar, toolbar_main, statusbar
+// Central: content_widget
+```
+
+#### Toolbar Widget Pattern
+
+```cpp
+// Base: QWidget
+// Layout: QHBoxLayout
+// Margins: 6px, Spacing: 4px
+// Widgets: button_*, frame_separator, spacer
+```
+
+### CMakeLists.txt Integration
+
+The agent automatically adds to `CMakeLists.txt`:
+
+```cmake
+set(SOURCES
+    # ... existing sources ...
+    views/<view_name>_view.cpp
+    views/<view_name>_view.h
+    views/<view_name>_view.ui
+    # ... optional controller/model ...
+)
+```
+
+### Controller Generation (Optional)
+
+If MVC pattern requested, generate:
+
+```cpp
+// controllers/<view_name>_controller.h
+class <ViewName>Controller : public QObject
+{
+    Q_OBJECT
+public:
+    explicit <ViewName>Controller(QObject *parent = nullptr);
+    void show_view();
+private:
+    <ViewName>View *view;
+    <ViewName>Model *model;  // if model needed
+};
+```
+
+### Model Generation (Optional)
+
+If data persistence needed:
+
+```cpp
+// models/<view_name>_model.h
+class <ViewName>Model : public QObject
+{
+    Q_OBJECT
+public:
+    explicit <ViewName>Model(QObject *parent = nullptr);
+    QVariant get(const QString &key) const;
+    void set(const QString &key, const QVariant &value);
+    void save();
+    void load();
+private:
+    QString m_filePath;
+    QJsonObject m_data;
+};
+```
+
+### Agent Command Examples
+
+#### Example 1: Simple Dialog
+
+```
+/create-view-agent settings
+```
+
+Generates:
+- `settings_view.h/cpp/ui` (QDialog with form)
+- Basic save/cancel functionality
+- Standard form layout
+
+#### Example 2: Main Window
+
+```
+/create-view-agent main-window --type=window
+```
+
+Generates:
+- `main_window.h/cpp/ui` (QMainWindow)
+- menubar, toolbar, statusbar structure
+- Central widget with layout
+
+#### Example 3: Form Widget
+
+```
+/create-view-agent connection-form --type=widget --layout=form
+```
+
+Generates:
+- `connection_form.h/cpp/ui` (QWidget)
+- QFormLayout with connection fields
+- Embedded widget pattern
+
+#### Example 4: Full MVC
+
+```
+/create-view-agent user-profile --mvc
+```
+
+Generates:
+- `user_profile_view.h/cpp/ui`
+- `user_profile_controller.h/cpp`
+- `user_profile_model.h/cpp`
+- Full MVC integration
+
+#### Example 5: Custom Layout
+
+```
+/create-view-agent dashboard --type=window --layout=grid --widgets=table,chart,status
+```
+
+Generates:
+- `dashboard_view.h/cpp/ui` (QMainWindow)
+- QGridLayout with specified widgets
+- Custom widget structure
+
+### Validation Rules
+
+After generation, verify:
+
+- [ ] All files follow naming conventions
+- [ ] UI file opens in Qt Designer
+- [ ] CMakeLists.txt includes all sources
+- [ ] Signals/slots follow `on_<sender>_<signal>` pattern
+- [ ] Widget names use `snake_case` with type prefix
+- [ ] Layout structure matches view type
+- [ ] Controller connects view signals properly (if MVC)
+- [ ] Model handles JSON persistence (if MVC)
+
+### Integration Checklist
+
+When adding a new view:
+
+1. **Files created** in correct directories
+2. **CMakeLists.txt updated** with new sources
+3. **Controller instantiated** in main.cpp (if MVC)
+4. **View connected** to controller signals
+5. **Translation strings** wrapped in `tr()`
+6. **Default values** loaded in constructor
+7. **Error handling** for file I/O (if model)
+
+---
+
+## 13. Testing
+
+### Unit Tests
+
+- Test models independently
+- Test controllers with mock views
+- Test data persistence (JSON read/write)
+
+### Integration Tests
+
+- Test full MVC flow
+- Test UI interactions
+- Test system tray behavior
+- Test settings persistence
+
+### Manual Testing
+
+- Verify all UI elements functional
+- Test with different screen sizes
+- Test language switching
+- Test error scenarios (missing files, invalid data)
